@@ -1,0 +1,218 @@
+
+<h2 class="sr-only">商品參數資料庫 — 可新增商品資料並依關鍵字搜尋</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.tabs{display:flex;gap:8px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tab{padding:8px 20px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;font-size:14px;color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500}
+.panel{display:none}.panel.active{display:block}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1rem}
+label{display:block;font-size:12px;color:var(--color-text-secondary);margin-bottom:4px}
+input,textarea,select{width:100%;font-family:var(--font-sans);font-size:14px}
+textarea{resize:vertical;min-height:72px}
+.field{display:flex;flex-direction:column}
+.field.full{grid-column:1/-1}
+.btn{padding:8px 20px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;font-size:14px;transition:all .15s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn-primary{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary)}
+.btn-primary:hover{opacity:.85}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+.search-row{display:flex;gap:8px;margin-bottom:1.5rem}
+.search-row input{flex:1}
+.result-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.result-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.product-id{font-size:12px;color:var(--color-text-secondary);background:var(--color-background-secondary);padding:3px 10px;border-radius:var(--border-radius-md)}
+.product-name{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px}
+.detail-item{font-size:13px;padding:4px 0}
+.detail-item span:first-child{color:var(--color-text-secondary);display:block;font-size:11px}
+.detail-item span:last-child{color:var(--color-text-primary)}
+.empty{text-align:center;padding:3rem;color:var(--color-text-tertiary);font-size:14px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);background:var(--color-background-info);color:var(--color-text-info);margin-left:8px}
+.style-tag{font-size:12px;color:var(--color-text-secondary);margin-top:2px}
+.count-bar{font-size:13px;color:var(--color-text-secondary);margin-bottom:1rem}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--color-text-primary);color:var(--color-background-primary);padding:10px 18px;border-radius:var(--border-radius-md);font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+.section-title{font-size:13px;font-weight:500;color:var(--color-text-secondary);margin:1rem 0 8px;padding-bottom:4px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.delete-btn{font-size:12px;color:var(--color-text-danger,#c00);background:transparent;border:none;cursor:pointer;padding:2px 6px}
+.delete-btn:hover{text-decoration:underline}
+</style>
+
+<div style="padding:1rem 0">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('search')">搜尋查詢</button>
+    <button class="tab" onclick="switchTab('add')">新增商品</button>
+    <button class="tab" onclick="switchTab('all')">全部商品</button>
+  </div>
+
+  <div id="panel-search" class="panel active">
+    <div class="search-row">
+      <input type="text" id="search-input" placeholder="輸入產品編號、名稱、材質、關鍵字…" oninput="doSearch(this.value)">
+      <button class="btn" onclick="doSearch(document.getElementById('search-input').value)">搜尋</button>
+    </div>
+    <div id="search-results"></div>
+  </div>
+
+  <div id="panel-add" class="panel">
+    <div class="section-title">基本資訊</div>
+    <div class="form-grid">
+      <div class="field"><label>產品編號 *</label><input id="f-id" type="text" placeholder="例：P-001"></div>
+      <div class="field"><label>產品名稱 *</label><input id="f-name" type="text" placeholder="例：棉麻收納盒"></div>
+      <div class="field"><label>樣式／顏色</label><input id="f-style" type="text" placeholder="例：深灰、原色麻"></div>
+    </div>
+    <div class="section-title">尺寸重量</div>
+    <div class="form-grid">
+      <div class="field"><label>尺寸規格</label><input id="f-size" type="text" placeholder="例：S / M / L / 均一"></div>
+      <div class="field"><label>長度 (cm)</label><input id="f-len" type="text" placeholder=""></div>
+      <div class="field"><label>高度 (cm)</label><input id="f-h" type="text" placeholder=""></div>
+      <div class="field"><label>寬度 (cm)</label><input id="f-w" type="text" placeholder=""></div>
+      <div class="field"><label>重量 (g)</label><input id="f-weight" type="text" placeholder=""></div>
+    </div>
+    <div class="section-title">其他規格</div>
+    <div class="form-grid">
+      <div class="field"><label>材質</label><input id="f-material" type="text" placeholder="例：棉80% 麻20%"></div>
+      <div class="field"><label>有效期限</label><input id="f-expire" type="text" placeholder="例：2年 / 無期限"></div>
+      <div class="field"><label>超取上限</label><input id="f-limit" type="text" placeholder="例：最多3件"></div>
+      <div class="field full"><label>其他細節</label><textarea id="f-note" placeholder="客人常問的問題、注意事項、補充說明…"></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="clearForm()">清除</button>
+      <button class="btn btn-primary" onclick="saveProduct()">儲存商品 ↗</button>
+    </div>
+  </div>
+
+  <div id="panel-all" class="panel">
+    <div id="all-count" class="count-bar"></div>
+    <div id="all-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE_KEY = 'product_db_v1';
+
+function load(){
+  try{return JSON.parse(localStorage.getItem(STORE_KEY)||'[]')}catch{return[]}
+}
+function save(data){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch{}
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active',['search','add','all'][i]===t)
+  });
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='all') renderAll();
+  if(t==='search') doSearch(document.getElementById('search-input').value);
+}
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+function clearForm(){
+  ['id','name','style','size','len','h','w','weight','material','expire','limit','note'].forEach(k=>{
+    document.getElementById('f-'+k).value='';
+  });
+}
+
+function saveProduct(){
+  const id=document.getElementById('f-id').value.trim();
+  const name=document.getElementById('f-name').value.trim();
+  if(!id||!name){toast('請填寫產品編號與名稱');return}
+  const data=load();
+  const p={
+    id,name,
+    style:document.getElementById('f-style').value.trim(),
+    size:document.getElementById('f-size').value.trim(),
+    len:document.getElementById('f-len').value.trim(),
+    h:document.getElementById('f-h').value.trim(),
+    w:document.getElementById('f-w').value.trim(),
+    weight:document.getElementById('f-weight').value.trim(),
+    material:document.getElementById('f-material').value.trim(),
+    expire:document.getElementById('f-expire').value.trim(),
+    limit:document.getElementById('f-limit').value.trim(),
+    note:document.getElementById('f-note').value.trim(),
+    ts:Date.now()
+  };
+  const idx=data.findIndex(x=>x.id===id);
+  if(idx>=0){data[idx]=p;toast('已更新商品：'+name)}
+  else{data.push(p);toast('已新增商品：'+name)}
+  save(data);clearForm();
+}
+
+function deleteProduct(id){
+  if(!confirm('確定要刪除這筆資料嗎？'))return;
+  const data=load().filter(x=>x.id!==id);
+  save(data);renderAll();doSearch(document.getElementById('search-input').value);
+  toast('已刪除');
+}
+
+function highlight(text,kw){
+  if(!kw||!text)return text||'';
+  return text.replace(new RegExp('('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:var(--color-background-warning);color:var(--color-text-primary);">$1</mark>');
+}
+
+function productCard(p,kw){
+  const h=s=>kw?highlight(s,kw):s;
+  const dims=[p.len&&`長${p.len}`,p.h&&`高${p.h}`,p.w&&`寬${p.w}`].filter(Boolean).join(' × ');
+  return`<div class="result-card">
+    <div class="result-header">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span class="product-id">${h(p.id)}</span>
+          ${p.size?`<span class="badge">${h(p.size)}</span>`:''}
+        </div>
+        <div class="product-name">${h(p.name)}</div>
+        ${p.style?`<div class="style-tag">${h(p.style)}</div>`:''}
+      </div>
+      <button class="delete-btn" onclick="deleteProduct('${p.id}')">刪除</button>
+    </div>
+    <div class="detail-grid">
+      ${dims?`<div class="detail-item"><span>尺寸</span><span>${h(dims)} cm</span></div>`:''}
+      ${p.weight?`<div class="detail-item"><span>重量</span><span>${h(p.weight)} g</span></div>`:''}
+      ${p.material?`<div class="detail-item"><span>材質</span><span>${h(p.material)}</span></div>`:''}
+      ${p.expire?`<div class="detail-item"><span>有效期限</span><span>${h(p.expire)}</span></div>`:''}
+      ${p.limit?`<div class="detail-item"><span>超取上限</span><span>${h(p.limit)}</span></div>`:''}
+    </div>
+    ${p.note?`<div style="margin-top:10px;padding-top:8px;border-top:0.5px solid var(--color-border-tertiary);font-size:13px;color:var(--color-text-secondary);line-height:1.6">${h(p.note)}</div>`:''}
+  </div>`;
+}
+
+function doSearch(kw){
+  const container=document.getElementById('search-results');
+  kw=(kw||'').trim();
+  const data=load();
+  if(!kw){
+    container.innerHTML=`<div class="empty">輸入關鍵字開始搜尋<br><span style="font-size:12px">支援產品編號、名稱、材質、樣式等</span></div>`;
+    return;
+  }
+  const lower=kw.toLowerCase();
+  const results=data.filter(p=>{
+    return[p.id,p.name,p.style,p.material,p.note,p.size,p.expire,p.limit]
+      .some(v=>v&&v.toLowerCase().includes(lower));
+  });
+  if(!results.length){
+    container.innerHTML=`<div class="empty">找不到「${kw}」相關資料</div>`;
+    return;
+  }
+  container.innerHTML=`<div class="count-bar">找到 ${results.length} 筆結果</div>`+results.map(p=>productCard(p,kw)).join('');
+}
+
+function renderAll(){
+  const data=load();
+  const el=document.getElementById('all-list');
+  const cnt=document.getElementById('all-count');
+  cnt.textContent=`共 ${data.length} 筆商品資料`;
+  if(!data.length){el.innerHTML=`<div class="empty">尚未新增任何商品</div>`;return}
+  el.innerHTML=[...data].reverse().map(p=>productCard(p,'')).join('');
+}
+
+doSearch('');
+</script>
