@@ -253,13 +253,13 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
             <div class="form-grid">
               <div class="field"><label>產品編號 *</label><input id="f-id" type="text" placeholder="例：P-001"></div>
               <div class="field"><label>產品名稱 *</label><input id="f-name" type="text" placeholder="例：棉麻收納盒"></div>
-              <div class="field"><label>樣式 / 顏色</label><input id="f-style" type="text" placeholder="例：深灰、原色麻"></div>
+              <div class="field" id="f-style-wrap"><label>樣式 / 顏色</label><input id="f-style" type="text" placeholder="例：深灰、原色麻"></div>
             </div>
           </div>
           <div class="form-section">
             <div class="section-label">尺寸規格</div>
             <div class="form-grid">
-              <div class="field"><label>尺寸規格</label><input id="f-size" type="text" placeholder="例：S / M / L / 均一"></div>
+              <div class="field" id="f-size-wrap"><label>尺寸規格</label><input id="f-size" type="text" placeholder="例：S / M / L / 均一"></div>
               <div class="field"><label>長度 (cm)</label><input id="f-len" type="text"></div>
               <div class="field"><label>高度 (cm)</label><input id="f-h" type="text"></div>
               <div class="field"><label>寬度 (cm)</label><input id="f-w" type="text"></div>
@@ -523,8 +523,10 @@ async function loadAll() {
 
 function toggleVariants() {
   const on = document.getElementById('f-has-variants').checked;
-  document.getElementById('single-variant').style.display = on ? 'none' : 'block';
-  document.getElementById('multi-variant').style.display  = on ? 'block' : 'none';
+  document.getElementById('single-variant').style.display  = on ? 'none'  : 'block';
+  document.getElementById('multi-variant').style.display   = on ? 'block' : 'none';
+  document.getElementById('f-style-wrap').style.display    = on ? 'none'  : '';
+  document.getElementById('f-size-wrap').style.display     = on ? 'none'  : '';
   if (on && document.querySelectorAll('#variant-rows .vrow').length === 0) addVariantRow();
 }
 
@@ -601,8 +603,10 @@ function editProduct(docId) {
     .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value = p[k] || ''; });
   const hasV = !!p.hasVariants;
   document.getElementById('f-has-variants').checked = hasV;
-  document.getElementById('single-variant').style.display = hasV ? 'none' : 'block';
-  document.getElementById('multi-variant').style.display  = hasV ? 'block' : 'none';
+  document.getElementById('single-variant').style.display  = hasV ? 'none'  : 'block';
+  document.getElementById('multi-variant').style.display   = hasV ? 'block' : 'none';
+  document.getElementById('f-style-wrap').style.display    = hasV ? 'none'  : '';
+  document.getElementById('f-size-wrap').style.display     = hasV ? 'none'  : '';
   document.getElementById('variant-rows').innerHTML = '';
   variantRowCount = 0;
   if (hasV) (p.variants||[]).forEach(v => addVariantRow(v));
@@ -615,8 +619,10 @@ function clearProductForm() {
     .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value=''; });
   document.getElementById('edit-hint').textContent = '';
   document.getElementById('f-has-variants').checked = false;
-  document.getElementById('single-variant').style.display = 'block';
-  document.getElementById('multi-variant').style.display  = 'none';
+  document.getElementById('single-variant').style.display  = 'block';
+  document.getElementById('multi-variant').style.display   = 'none';
+  document.getElementById('f-style-wrap').style.display    = '';
+  document.getElementById('f-size-wrap').style.display     = '';
   document.getElementById('variant-rows').innerHTML = '';
   variantRowCount = 0;
 }
