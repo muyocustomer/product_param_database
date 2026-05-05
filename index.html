@@ -3,380 +3,210 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>商品參數資料庫</title>
+<title>商品管理系統</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --bg:      #f7f6f2;
-  --bg2:     #eeecea;
-  --bg3:     #e4e2de;
-  --surface: #ffffff;
-  --text:    #1a1814;
-  --text2:   #6b6760;
-  --text3:   #a8a49e;
-  --border:  rgba(0,0,0,0.10);
-  --border2: rgba(0,0,0,0.20);
-  --accent:  #2d5a27;
-  --accent2: #4a8f40;
-  --accent-bg: #2d5a27;
-  --accent-text: #ffffff;
-  --tag-bg:  #e8f0e6;
-  --tag-text:#2d5a27;
-  --warn-bg: #fdf3dc;
-  --warn-text:#7a4f00;
-  --danger-bg:#fceaea;
-  --danger-text:#8c1f1f;
-  --mono: 'DM Mono', monospace;
-  --sans: 'Noto Sans TC', sans-serif;
-  --radius: 6px;
-  --radius-lg: 12px;
+  --bg: #f7f6f2; --bg2: #eeecea; --bg3: #e4e2de;
+  --surface: #ffffff; --text: #1a1814; --text2: #6b6760; --text3: #a8a49e;
+  --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.20);
+  --accent: #2d5a27; --accent2: #4a8f40; --accent-bg: #2d5a27;
+  --tag-bg: #e8f0e6; --tag-text: #2d5a27;
+  --warn-bg: #fdf3dc; --warn-text: #7a4f00;
+  --danger-bg: #fceaea; --danger-text: #8c1f1f;
+  --info-bg: #e6f1fb; --info-text: #0c447c;
+  --mono: 'DM Mono', monospace; --sans: 'Noto Sans TC', sans-serif;
+  --radius: 6px; --radius-lg: 12px;
   --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
 }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.65; }
 
-body {
-  font-family: var(--sans);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.65;
-}
-
-/* ══ 登入頁 ══ */
-#login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-  padding: 1rem;
-}
-
-.login-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 2.5rem 2rem;
-  width: 100%;
-  max-width: 380px;
-  box-shadow: var(--shadow);
-}
-
-.login-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 1.75rem;
-}
-
-.login-logo-icon {
-  width: 36px; height: 36px;
-  background: var(--accent-bg);
-  border-radius: var(--radius);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-}
-
+/* ── Login ── */
+#login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 1rem; }
+.login-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem 2rem; width: 100%; max-width: 380px; box-shadow: var(--shadow); }
+.login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 1.75rem; }
+.login-logo-icon { width: 36px; height: 36px; background: var(--accent-bg); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .login-title { font-size: 18px; font-weight: 600; }
-.login-sub   { font-size: 13px; color: var(--text2); margin-top: 2px; }
-
-.login-divider {
-  display: flex; align-items: center; gap: 10px;
-  margin: 1.25rem 0;
-  color: var(--text3);
-  font-size: 12px;
-}
-
-.login-divider::before,
-.login-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-label  { font-size: 11px; font-weight: 500; color: var(--text2); }
-
-input[type=email], input[type=password], input[type=text], textarea {
-  padding: 9px 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-family: var(--sans);
-  font-size: 13px;
-  color: var(--text);
-  outline: none;
-  transition: border-color .15s, background .15s;
-  width: 100%;
-}
-
-input:focus, textarea:focus { border-color: var(--accent2); background: var(--surface); }
-input::placeholder, textarea::placeholder { color: var(--text3); }
-
-.btn-full {
-  width: 100%;
-  padding: 10px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border2);
-  background: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: var(--sans);
-  font-weight: 500;
-  color: var(--text);
-  transition: all .15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.btn-full:hover { background: var(--bg2); }
-.btn-full:active { transform: scale(.98); }
-
-.btn-full.primary {
-  background: var(--accent-bg);
-  color: #fff;
-  border-color: var(--accent-bg);
-}
-
-.btn-full.primary:hover { background: var(--accent2); border-color: var(--accent2); }
-
-.btn-full.google {
-  border: 1px solid var(--border2);
-  background: var(--surface);
-}
-
-.google-icon {
-  width: 18px; height: 18px;
-}
-
-.login-error {
-  background: var(--danger-bg);
-  color: var(--danger-text);
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  font-size: 13px;
-  margin-bottom: 12px;
-  display: none;
-}
-
+.login-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.login-divider { display: flex; align-items: center; gap: 10px; margin: 1.25rem 0; color: var(--text3); font-size: 12px; }
+.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.login-error { background: var(--danger-bg); color: var(--danger-text); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; margin-bottom: 12px; display: none; }
 .login-error.show { display: block; }
+.btn-full { width: 100%; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border2); background: transparent; cursor: pointer; font-size: 14px; font-family: var(--sans); font-weight: 500; color: var(--text); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+.btn-full:hover { background: var(--bg2); }
+.btn-full.primary { background: var(--accent-bg); color: #fff; border-color: var(--accent-bg); }
+.btn-full.primary:hover { background: var(--accent2); }
+.btn-full.google { border: 1px solid var(--border2); background: var(--surface); }
+.google-icon { width: 18px; height: 18px; }
 
-/* ══ 主畫面 ══ */
+/* ── Header ── */
 #app-page { display: none; }
-
-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 1.5rem;
-  height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  box-shadow: var(--shadow);
-}
-
-.logo {
-  display: flex; align-items: center; gap: 10px;
-  font-weight: 600; font-size: 15px;
-}
-
-.logo-icon {
-  width: 28px; height: 28px;
-  background: var(--accent-bg);
-  border-radius: var(--radius);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 14px;
-}
-
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: var(--shadow); }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+.logo-icon { width: 28px; height: 28px; background: var(--accent-bg); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; }
 .header-right { display: flex; align-items: center; gap: 10px; }
-
-.sync-pill {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 11px; font-family: var(--mono);
-  color: var(--text3); background: var(--bg2);
-  padding: 4px 10px; border-radius: 99px;
-}
-
+.sync-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: var(--mono); color: var(--text3); background: var(--bg2); padding: 4px 10px; border-radius: 99px; }
 .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
-.sync-dot.ok     { background: #3b7a2f; }
+.sync-dot.ok { background: #3b7a2f; }
 .sync-dot.saving { background: #c47e00; animation: blink 1s infinite; }
-.sync-dot.error  { background: #b22222; }
+.sync-dot.error { background: #b22222; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-.user-info {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--text2);
-}
-
-.user-avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--bg3);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600; color: var(--text2);
-  overflow: hidden;
-}
-
+.user-info { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text2); overflow: hidden; }
 .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.btn-logout {
-  padding: 5px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: transparent;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: var(--sans);
-  color: var(--text2);
-  transition: all .15s;
-}
-
+.btn-logout { padding: 5px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: transparent; cursor: pointer; font-size: 12px; font-family: var(--sans); color: var(--text2); transition: all .15s; }
 .btn-logout:hover { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-text); }
 
-.container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+/* ── Main Tabs ── */
+.container { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+.main-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 5px; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+.main-tab { padding: 9px 8px; border: none; border-radius: var(--radius); background: transparent; cursor: pointer; font-size: 13px; font-family: var(--sans); color: var(--text2); font-weight: 500; transition: all .15s; }
+.main-tab:hover { background: var(--bg2); color: var(--text); }
+.main-tab.active { background: var(--accent-bg); color: #fff; }
+.main-panel { display: none; }
+.main-panel.active { display: block; }
 
-.tabs {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 4px; background: var(--surface);
-  border: 1px solid var(--border); border-radius: var(--radius-lg);
-  padding: 5px; margin-bottom: 1.5rem; box-shadow: var(--shadow);
-}
-
-.tab {
-  padding: 9px 8px; border: none; border-radius: var(--radius);
-  background: transparent; cursor: pointer;
-  font-size: 13px; font-family: var(--sans);
-  color: var(--text2); font-weight: 500; transition: all .15s;
-}
-
-.tab:hover { background: var(--bg2); color: var(--text); }
-.tab.active { background: var(--accent-bg); color: #fff; }
-
+/* ── Sub Tabs (商品資料庫) ── */
+.tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: var(--radius); padding: 4px; margin-bottom: 1.25rem; }
+.tab { flex: 1; padding: 7px 8px; border: none; border-radius: var(--radius); background: transparent; cursor: pointer; font-size: 12px; font-family: var(--sans); color: var(--text2); font-weight: 500; transition: all .15s; }
+.tab:hover { background: var(--bg3); }
+.tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 .panel { display: none; }
 .panel.active { display: block; }
 
-.search-wrap { position: relative; margin-bottom: 1.25rem; }
-.search-wrap input {
-  width: 100%; padding: 12px 16px 12px 44px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); font-family: var(--sans);
-  font-size: 14px; color: var(--text); outline: none;
-  box-shadow: var(--shadow); transition: border-color .15s;
-}
-.search-wrap input:focus { border-color: var(--accent2); }
-.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
-
-.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
+/* ── Forms ── */
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 1rem; }
 .form-section { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+.form-section:last-of-type { border-bottom: none; }
 .section-label { font-size: 10px; font-family: var(--mono); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 1rem; }
-
 .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
 .field.full { grid-column: 1 / -1; }
-
-textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
-
+.field.span2 { grid-column: span 2; }
+label { font-size: 11px; font-weight: 500; color: var(--text2); }
+input[type=text], input[type=email], input[type=password], input[type=date], input[type=number], textarea, select {
+  padding: 8px 11px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: var(--sans); font-size: 13px; color: var(--text); outline: none;
+  transition: border-color .15s, background .15s; width: 100%;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent2); background: var(--surface); }
+input::placeholder, textarea::placeholder { color: var(--text3); }
+textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
 .form-footer { padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-top: 1px solid var(--border); }
 .form-hint { font-size: 12px; color: var(--text3); font-family: var(--mono); }
 .btn-group { display: flex; gap: 8px; }
-
-button {
-  padding: 8px 18px; border-radius: var(--radius);
-  border: 1px solid var(--border2); background: transparent;
-  cursor: pointer; font-size: 13px; font-family: var(--sans);
-  color: var(--text); font-weight: 500; transition: all .15s;
-}
+button { padding: 8px 18px; border-radius: var(--radius); border: 1px solid var(--border2); background: transparent; cursor: pointer; font-size: 13px; font-family: var(--sans); color: var(--text); font-weight: 500; transition: all .15s; }
 button:hover { background: var(--bg2); }
 button:active { transform: scale(.98); }
 .btn-primary { background: var(--accent-bg); color: #fff; border-color: var(--accent-bg); }
 .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+.btn-danger-outline { color: var(--danger-text); border-color: var(--danger-text); }
+.btn-danger-outline:hover { background: var(--danger-bg); }
 
+/* ── Search ── */
+.search-wrap { position: relative; margin-bottom: 1.25rem; }
+.search-wrap input { width: 100%; padding: 12px 16px 12px 44px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); font-family: var(--sans); font-size: 14px; color: var(--text); outline: none; box-shadow: var(--shadow); transition: border-color .15s; }
+.search-wrap input:focus { border-color: var(--accent2); }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
+
+/* ── Product Cards ── */
 .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); transition: border-color .15s; }
 .result-card:hover { border-color: var(--border2); }
-
 .card-top { padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
 .card-id { font-family: var(--mono); font-size: 11px; color: var(--tag-text); background: var(--tag-bg); padding: 3px 8px; border-radius: var(--radius); display: inline-block; margin-bottom: 4px; }
 .card-name { font-size: 16px; font-weight: 600; }
 .card-style { font-size: 12px; color: var(--text2); margin-top: 2px; }
 .card-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
-
 .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: var(--radius); border: 1px solid var(--border); background: transparent; cursor: pointer; font-family: var(--sans); color: var(--text2); font-weight: 500; transition: all .15s; }
 .btn-sm:hover { background: var(--bg2); color: var(--text); border-color: var(--border2); }
 .btn-danger { color: var(--danger-text); }
 .btn-danger:hover { background: var(--danger-bg); border-color: var(--danger-text); }
-
 .card-details { padding: 0 1.25rem 1rem; }
 .detail-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .detail-chip { display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 10px; min-width: 100px; }
 .chip-label { font-size: 10px; color: var(--text3); font-family: var(--mono); }
 .chip-value { font-size: 13px; color: var(--text); font-weight: 500; }
-
 .card-note { background: var(--warn-bg); border-radius: var(--radius); padding: 9px 12px; font-size: 13px; color: var(--warn-text); line-height: 1.7; white-space: pre-wrap; margin-top: 4px; }
 .card-note-label { font-size: 10px; font-family: var(--mono); color: var(--warn-text); margin-bottom: 3px; opacity: .7; }
 
+/* ── Anomaly Cards ── */
+.anomaly-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
+.anomaly-card-header { padding: .875rem 1.25rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg); }
+.anomaly-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.anomaly-id { font-family: var(--mono); font-size: 11px; color: var(--info-text); background: var(--info-bg); padding: 3px 8px; border-radius: var(--radius); }
+.anomaly-platform { font-size: 12px; font-weight: 600; color: var(--text); }
+.anomaly-date { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.anomaly-by { font-size: 11px; color: var(--text2); }
+.anomaly-body { padding: 1rem 1.25rem; }
+.anomaly-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tag { font-size: 11px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--border); color: var(--text2); }
+.tag.error { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
+.tag.warn  { background: var(--warn-bg);   color: var(--warn-text);   border-color: transparent; }
+.tag.info  { background: var(--info-bg);   color: var(--info-text);   border-color: transparent; }
+.tag.ok    { background: var(--tag-bg);    color: var(--tag-text);    border-color: transparent; }
+.anomaly-products { margin-bottom: 10px; }
+.ap-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--bg); border-radius: var(--radius); margin-bottom: 4px; font-size: 13px; flex-wrap: wrap; }
+.ap-id { font-family: var(--mono); font-size: 11px; color: var(--tag-text); background: var(--tag-bg); padding: 2px 7px; border-radius: var(--radius); }
+.anomaly-loss { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 12px; background: var(--danger-bg); border-radius: var(--radius); }
+.loss-item { display: flex; flex-direction: column; }
+.loss-label { font-size: 10px; color: var(--danger-text); font-family: var(--mono); opacity: .8; }
+.loss-value { font-size: 14px; font-weight: 600; color: var(--danger-text); }
+.loss-total { margin-left: auto; }
+
+/* ── Product rows in anomaly form ── */
+.product-rows { display: flex; flex-direction: column; gap: 8px; }
+.product-row { display: grid; grid-template-columns: 120px 1fr 120px 120px auto; gap: 8px; align-items: end; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.product-row .remove-btn { padding: 6px 10px; font-size: 12px; color: var(--danger-text); border-color: transparent; }
+.product-row .remove-btn:hover { background: var(--danger-bg); }
+.add-product-btn { margin-top: 8px; font-size: 13px; color: var(--accent2); border-color: var(--accent2); }
+.add-product-btn:hover { background: var(--tag-bg); }
+
+/* ── Misc ── */
 .empty { text-align: center; padding: 4rem 1rem; color: var(--text3); font-size: 14px; line-height: 2; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
 .count-bar { font-size: 12px; font-family: var(--mono); color: var(--text3); margin-bottom: 1rem; padding-left: 2px; }
-
 mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; }
-
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; z-index: 999; transition: opacity .2s, transform .2s; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; box-shadow: var(--shadow); }
+.summary-label { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 4px; }
+.summary-value { font-size: 22px; font-weight: 600; color: var(--text); }
+.summary-value.red { color: var(--danger-text); }
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+.filter-row select, .filter-row input { flex: 1; min-width: 120px; max-width: 200px; }
 
 @media (max-width: 600px) {
   .container { padding: 1rem; }
-  .form-grid { grid-template-columns: 1fr 1fr; }
   header { padding: 0 1rem; }
-  .card-top { flex-direction: column; }
-  .card-actions { align-self: flex-end; }
   .user-info span { display: none; }
   .sync-pill { display: none; }
+  .product-row { grid-template-columns: 1fr 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
 }
 </style>
 </head>
 <body>
 
-<!-- ══ 登入頁 ══ -->
+<!-- ══ 登入 ══ -->
 <div id="login-page">
   <div class="login-box">
     <div class="login-logo">
       <div class="login-logo-icon">📦</div>
       <div>
-        <div class="login-title">商品參數資料庫</div>
+        <div class="login-title">商品管理系統</div>
         <div class="login-sub">請登入後繼續</div>
       </div>
     </div>
-
-    <!-- Google 登入 -->
     <button class="btn-full google" onclick="loginGoogle()">
-      <svg class="google-icon" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
+      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       使用 Google 帳號登入
     </button>
-
     <div class="login-divider">或用電子郵件登入</div>
-
     <div id="login-error" class="login-error"></div>
-
-    <div class="field">
-      <label>電子郵件</label>
-      <input type="email" id="login-email" placeholder="example@gmail.com">
-    </div>
-    <div class="field">
-      <label>密碼</label>
-      <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginEmail()">
-    </div>
-
+    <div class="field" style="margin-bottom:12px"><label>電子郵件</label><input type="email" id="login-email" placeholder="example@gmail.com"></div>
+    <div class="field" style="margin-bottom:12px"><label>密碼</label><input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginEmail()"></div>
     <button class="btn-full primary" onclick="loginEmail()">登入</button>
   </div>
 </div>
@@ -384,15 +214,9 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
 <!-- ══ 主畫面 ══ -->
 <div id="app-page">
   <header>
-    <div class="logo">
-      <div class="logo-icon">📦</div>
-      商品參數資料庫
-    </div>
+    <div class="logo"><div class="logo-icon">📦</div>商品管理系統</div>
     <div class="header-right">
-      <div class="sync-pill">
-        <div class="sync-dot" id="sync-dot"></div>
-        <span id="sync-label">連線中…</span>
-      </div>
+      <div class="sync-pill"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">連線中…</span></div>
       <div class="user-info">
         <div class="user-avatar" id="user-avatar">?</div>
         <span id="user-name"></span>
@@ -402,64 +226,186 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
   </header>
 
   <div class="container">
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('search')">🔍 搜尋查詢</button>
-      <button class="tab" onclick="switchTab('add')">＋ 新增商品</button>
-      <button class="tab" onclick="switchTab('all')">☰ 全部商品</button>
+    <div class="main-tabs">
+      <button class="main-tab active" onclick="switchMain('products')">📦 商品資料庫</button>
+      <button class="main-tab" onclick="switchMain('anomaly')">⚠️ 異常記錄</button>
+      <button class="main-tab" onclick="switchMain('stats')">📊 損失統計</button>
     </div>
 
-    <div id="panel-search" class="panel active">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="search-input" placeholder="輸入產品編號、名稱、材質、關鍵字…" oninput="doSearch(this.value)" autocomplete="off">
+    <!-- ══ 商品資料庫 ══ -->
+    <div id="main-products" class="main-panel active">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('search')">🔍 搜尋查詢</button>
+        <button class="tab" onclick="switchTab('add')">＋ 新增商品</button>
+        <button class="tab" onclick="switchTab('all')">☰ 全部商品</button>
       </div>
-      <div id="search-results">
-        <div class="empty">輸入關鍵字開始搜尋<br><span style="font-size:12px">支援產品編號、名稱、材質、樣式、備註等所有欄位</span></div>
+      <div id="panel-search" class="panel active">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="輸入產品編號、名稱、材質、關鍵字…" oninput="doSearch(this.value)" autocomplete="off">
+        </div>
+        <div id="search-results"><div class="empty">輸入關鍵字開始搜尋<br><span style="font-size:12px">支援產品編號、名稱、材質、樣式、備註等所有欄位</span></div></div>
+      </div>
+      <div id="panel-add" class="panel">
+        <div class="form-card">
+          <div class="form-section">
+            <div class="section-label">基本資訊</div>
+            <div class="form-grid">
+              <div class="field"><label>產品編號 *</label><input id="f-id" type="text" placeholder="例：P-001"></div>
+              <div class="field"><label>產品名稱 *</label><input id="f-name" type="text" placeholder="例：棉麻收納盒"></div>
+              <div class="field"><label>樣式 / 顏色</label><input id="f-style" type="text" placeholder="例：深灰、原色麻"></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="section-label">尺寸規格</div>
+            <div class="form-grid">
+              <div class="field"><label>尺寸規格</label><input id="f-size" type="text" placeholder="例：S / M / L / 均一"></div>
+              <div class="field"><label>長度 (cm)</label><input id="f-len" type="text"></div>
+              <div class="field"><label>高度 (cm)</label><input id="f-h" type="text"></div>
+              <div class="field"><label>寬度 (cm)</label><input id="f-w" type="text"></div>
+              <div class="field"><label>重量 (g)</label><input id="f-weight" type="text"></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="section-label">其他規格</div>
+            <div class="form-grid">
+              <div class="field"><label>材質</label><input id="f-material" type="text" placeholder="例：棉80% 麻20%"></div>
+              <div class="field"><label>有效期限</label><input id="f-expire" type="text" placeholder="例：2年 / 無期限"></div>
+              <div class="field"><label>超取上限</label><input id="f-limit" type="text" placeholder="例：最多3件"></div>
+              <div class="field"><label>商品成本 (元)</label><input id="f-cost" type="number" placeholder="例：150"></div>
+              <div class="field full"><label>其他細節（客人常問的問題、注意事項）</label><textarea id="f-note" placeholder="例：此商品超商取貨最多3件；洗滌請手洗…"></textarea></div>
+            </div>
+          </div>
+          <div class="form-footer">
+            <span class="form-hint" id="edit-hint"></span>
+            <div class="btn-group">
+              <button onclick="clearProductForm()">清除</button>
+              <button class="btn-primary" onclick="saveProduct()">儲存商品</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="panel-all" class="panel">
+        <div id="all-count" class="count-bar"></div>
+        <div id="all-list"></div>
       </div>
     </div>
 
-    <div id="panel-add" class="panel">
-      <div class="form-card">
-        <div class="form-section">
-          <div class="section-label">基本資訊</div>
-          <div class="form-grid">
-            <div class="field"><label>產品編號 *</label><input id="f-id" type="text" placeholder="例：P-001"></div>
-            <div class="field"><label>產品名稱 *</label><input id="f-name" type="text" placeholder="例：棉麻收納盒"></div>
-            <div class="field"><label>樣式 / 顏色</label><input id="f-style" type="text" placeholder="例：深灰、原色麻"></div>
-          </div>
+    <!-- ══ 異常記錄 ══ -->
+    <div id="main-anomaly" class="main-panel">
+      <div class="tabs">
+        <button class="tab active" onclick="switchAnomalyTab('list')">📋 記錄列表</button>
+        <button class="tab" onclick="switchAnomalyTab('add')">＋ 新增記錄</button>
+      </div>
+
+      <!-- 列表 -->
+      <div id="apanel-list" class="panel active">
+        <div class="filter-row">
+          <select id="filter-platform" onchange="renderAnomalyList()">
+            <option value="">所有平台</option>
+            <option>蝦皮A</option><option>蝦皮B</option><option>蝦皮C</option><option>蝦皮D</option>
+            <option>MOMO大網</option><option>MO店+</option><option>PC24</option><option>東森</option><option>FRIDAY</option>
+          </select>
+          <select id="filter-status" onchange="renderAnomalyList()">
+            <option value="">所有商品狀態</option>
+            <option>商品錯誤</option><option>商品瑕疵</option><option>其他問題</option>
+          </select>
+          <input type="text" id="filter-keyword" placeholder="搜尋交易序號、產品編號…" oninput="renderAnomalyList()">
         </div>
-        <div class="form-section">
-          <div class="section-label">尺寸規格</div>
-          <div class="form-grid">
-            <div class="field"><label>尺寸規格</label><input id="f-size" type="text" placeholder="例：S / M / L / 均一"></div>
-            <div class="field"><label>長度 (cm)</label><input id="f-len" type="text"></div>
-            <div class="field"><label>高度 (cm)</label><input id="f-h" type="text"></div>
-            <div class="field"><label>寬度 (cm)</label><input id="f-w" type="text"></div>
-            <div class="field"><label>重量 (g)</label><input id="f-weight" type="text"></div>
+        <div id="anomaly-count" class="count-bar"></div>
+        <div id="anomaly-list"></div>
+      </div>
+
+      <!-- 新增 -->
+      <div id="apanel-add" class="panel">
+        <div class="form-card">
+          <div class="form-section">
+            <div class="section-label">基本資訊</div>
+            <div class="form-grid">
+              <div class="field"><label>登記日期 *</label><input id="a-date" type="date"></div>
+              <div class="field"><label>登記人</label><input id="a-by" type="text" placeholder="自動帶入登入帳號" readonly style="color:var(--text2)"></div>
+              <div class="field"><label>出貨日期</label><input id="a-ship-date" type="date"></div>
+              <div class="field"><label>交易序號</label><input id="a-order" type="text" placeholder="例：231025XXXXXXX"></div>
+              <div class="field">
+                <label>平台 *</label>
+                <select id="a-platform">
+                  <option value="">請選擇</option>
+                  <option>蝦皮A</option><option>蝦皮B</option><option>蝦皮C</option><option>蝦皮D</option>
+                  <option>MOMO大網</option><option>MO店+</option><option>PC24</option><option>東森</option><option>FRIDAY</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="form-section">
-          <div class="section-label">其他規格</div>
-          <div class="form-grid">
-            <div class="field"><label>材質</label><input id="f-material" type="text" placeholder="例：棉80% 麻20%"></div>
-            <div class="field"><label>有效期限</label><input id="f-expire" type="text" placeholder="例：2年 / 無期限"></div>
-            <div class="field"><label>超取上限</label><input id="f-limit" type="text" placeholder="例：最多3件"></div>
-            <div class="field full"><label>其他細節（客人常問的問題、注意事項）</label><textarea id="f-note" placeholder="例：此商品超商取貨最多3件；洗滌請手洗，勿機洗…"></textarea></div>
+          <div class="form-section">
+            <div class="section-label">問題分類</div>
+            <div class="form-grid">
+              <div class="field">
+                <label>商品狀態 *</label>
+                <select id="a-condition">
+                  <option value="">請選擇</option>
+                  <option>商品錯誤</option><option>商品瑕疵</option><option>其他問題</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>問題類型 *</label>
+                <select id="a-type">
+                  <option value="">請選擇</option>
+                  <option>寄錯</option><option>少寄</option><option>多寄</option><option>超材</option>
+                  <option>星號缺貨</option><option>匯單有誤</option><option>客人因素</option>
+                  <option>特殊狀況</option><option>複合式錯誤</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>後續處理狀況</label>
+                <select id="a-resolution">
+                  <option value="">請選擇</option>
+                  <option>線上整筆退款</option><option>線上部分退款</option><option>宅配補寄</option>
+                  <option>宅配來回更換</option><option>客可接受商品</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="form-footer">
-          <span class="form-hint" id="edit-hint"></span>
-          <div class="btn-group">
-            <button onclick="clearForm()">清除</button>
-            <button class="btn-primary" onclick="saveProduct()">儲存商品</button>
+          <div class="form-section">
+            <div class="section-label">相關商品（可新增多筆）</div>
+            <div id="product-rows" class="product-rows"></div>
+            <button class="add-product-btn" onclick="addProductRow()">＋ 新增商品</button>
+          </div>
+          <div class="form-section">
+            <div class="section-label">損失金額</div>
+            <div class="form-grid">
+              <div class="field"><label>損失金額 (元)</label><input id="a-loss" type="number" placeholder="0" oninput="calcTotal()"></div>
+              <div class="field"><label>運費成本 (元)</label><input id="a-freight" type="number" placeholder="0" oninput="calcTotal()"></div>
+              <div class="field"><label>總損失金額 (元)</label><input id="a-total" type="number" placeholder="自動計算" readonly style="font-weight:600;color:var(--danger-text)"></div>
+            </div>
+          </div>
+          <div class="form-footer">
+            <span class="form-hint" id="a-edit-hint"></span>
+            <div class="btn-group">
+              <button onclick="clearAnomalyForm()">清除</button>
+              <button class="btn-primary" onclick="saveAnomaly()">儲存記錄</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div id="panel-all" class="panel">
-      <div id="all-count" class="count-bar"></div>
-      <div id="all-list"></div>
+    <!-- ══ 損失統計 ══ -->
+    <div id="main-stats" class="main-panel">
+      <div class="filter-row" style="margin-bottom:1.5rem">
+        <select id="stats-period" onchange="renderStats()">
+          <option value="all">全部時間</option>
+          <option value="month">本月</option>
+          <option value="3month">近3個月</option>
+          <option value="year">本年度</option>
+        </select>
+        <select id="stats-platform" onchange="renderStats()">
+          <option value="">所有平台</option>
+          <option>蝦皮A</option><option>蝦皮B</option><option>蝦皮C</option><option>蝦皮D</option>
+          <option>MOMO大網</option><option>MO店+</option><option>PC24</option><option>東森</option><option>FRIDAY</option>
+        </select>
+      </div>
+      <div class="summary-grid" id="stats-summary"></div>
+      <div id="stats-breakdown"></div>
     </div>
   </div>
 </div>
@@ -467,15 +413,13 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs,
-         addDoc, setDoc, deleteDoc, doc,
-         query, orderBy }                         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged,
-         signInWithPopup, GoogleAuthProvider,
-         signInWithEmailAndPassword, signOut }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider,
+         signInWithEmailAndPassword, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// ── Firebase 設定
 const firebaseConfig = {
   apiKey: "AIzaSyC5c-2W-wZAIjbbZTBS0lfKV1LsTmTOwz8",
   authDomain: "product-database-dbe0f.firebaseapp.com",
@@ -485,280 +429,484 @@ const firebaseConfig = {
   appId: "1:1025340803871:web:20124473bc8596670abe2a"
 };
 
-const app      = initializeApp(firebaseConfig);
-const db       = getFirestore(app);
-const auth     = getAuth(app);
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const COL      = "products";
-let DB = [];
+let DB = [], ANOMALIES = [];
+let currentUser = null;
 
-// ── 登入狀態監聽
+// ── Auth ──
 onAuthStateChanged(auth, user => {
   if (user) {
+    currentUser = user;
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('app-page').style.display   = 'block';
-    // 顯示使用者資訊
     const avatar = document.getElementById('user-avatar');
     document.getElementById('user-name').textContent = user.displayName || user.email;
-    if (user.photoURL) {
-      avatar.innerHTML = `<img src="${user.photoURL}" alt="">`;
-    } else {
-      avatar.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
-    }
-    loadDB();
+    if (user.photoURL) avatar.innerHTML = `<img src="${user.photoURL}" alt="">`;
+    else avatar.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+    document.getElementById('a-by').value = user.displayName || user.email || '';
+    loadAll();
   } else {
+    currentUser = null;
     document.getElementById('login-page').style.display = 'flex';
     document.getElementById('app-page').style.display   = 'none';
   }
 });
 
-// ── Google 登入
 async function loginGoogle() {
-  try {
-    await signInWithPopup(auth, provider);
-  } catch(e) {
-    showLoginError('Google 登入失敗，請重試');
-    console.error(e);
-  }
+  try { await signInWithPopup(auth, provider); }
+  catch(e) { showLoginError('Google 登入失敗，請重試'); }
 }
 
-// ── 帳號密碼登入
 async function loginEmail() {
-  const email    = document.getElementById('login-email').value.trim();
+  const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   if (!email || !password) { showLoginError('請填寫電子郵件與密碼'); return; }
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch(e) {
-    const msg = {
-      'auth/user-not-found':  '找不到此帳號',
-      'auth/wrong-password':  '密碼錯誤',
-      'auth/invalid-email':   '電子郵件格式錯誤',
-      'auth/invalid-credential': '帳號或密碼錯誤',
-    }[e.code] || '登入失敗，請檢查帳號密碼';
+  try { await signInWithEmailAndPassword(auth, email, password); }
+  catch(e) {
+    const msg = {'auth/user-not-found':'找不到此帳號','auth/wrong-password':'密碼錯誤','auth/invalid-email':'電子郵件格式錯誤','auth/invalid-credential':'帳號或密碼錯誤'}[e.code] || '登入失敗';
     showLoginError(msg);
   }
 }
 
 function showLoginError(msg) {
   const el = document.getElementById('login-error');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3500);
 }
 
-// ── 登出
-async function logout() {
-  await signOut(auth);
-  toast('已登出');
-}
+async function logout() { await signOut(auth); toast('已登出'); }
 
-// ── 讀取資料
+// ── Sync Status ──
 function setSyncStatus(state, label) {
   document.getElementById('sync-dot').className = 'sync-dot ' + state;
   document.getElementById('sync-label').textContent = label;
 }
 
-async function loadDB() {
+// ── Load All ──
+async function loadAll() {
   setSyncStatus('saving', '載入中…');
   try {
-    const q    = query(collection(db, COL), orderBy("ts", "desc"));
-    const snap = await getDocs(q);
-    DB = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
-    setSyncStatus('ok', `已連線・${DB.length} 筆`);
+    const [pSnap, aSnap] = await Promise.all([
+      getDocs(query(collection(db, 'products'),  orderBy('ts','desc'))),
+      getDocs(query(collection(db, 'anomalies'), orderBy('ts','desc')))
+    ]);
+    DB        = pSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    ANOMALIES = aSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    setSyncStatus('ok', `已連線・${DB.length} 筆商品`);
     doSearch(document.getElementById('search-input').value);
-  } catch(e) {
-    setSyncStatus('error', '連線失敗');
-    console.error(e);
-  }
+    renderAnomalyList();
+    renderStats();
+  } catch(e) { setSyncStatus('error', '連線失敗'); console.error(e); }
 }
 
-// ── 儲存
+// ══ 商品資料庫 ══
+
 async function saveProduct() {
-  const id   = document.getElementById('f-id').value.trim();
+  const id = document.getElementById('f-id').value.trim();
   const name = document.getElementById('f-name').value.trim();
   if (!id || !name) { toast('⚠ 請填寫產品編號與名稱'); return; }
-
   const p = {
     id, name,
-    style:    document.getElementById('f-style').value.trim(),
-    size:     document.getElementById('f-size').value.trim(),
-    len:      document.getElementById('f-len').value.trim(),
-    h:        document.getElementById('f-h').value.trim(),
-    w:        document.getElementById('f-w').value.trim(),
+    style: document.getElementById('f-style').value.trim(),
+    size:  document.getElementById('f-size').value.trim(),
+    len:   document.getElementById('f-len').value.trim(),
+    h:     document.getElementById('f-h').value.trim(),
+    w:     document.getElementById('f-w').value.trim(),
     weight:   document.getElementById('f-weight').value.trim(),
     material: document.getElementById('f-material').value.trim(),
     expire:   document.getElementById('f-expire').value.trim(),
     limit:    document.getElementById('f-limit').value.trim(),
+    cost:     document.getElementById('f-cost').value.trim(),
     note:     document.getElementById('f-note').value.trim(),
-    ts:       Date.now(),
-    updatedBy: auth.currentUser?.email || ''
+    ts: Date.now()
   };
-
   setSyncStatus('saving', '儲存中…');
   try {
     const existing = DB.find(x => x.id === id);
-    if (existing && existing._docId) {
-      await setDoc(doc(db, COL, existing._docId), p);
-      toast('✓ 已更新：' + name);
-    } else {
-      await addDoc(collection(db, COL), p);
-      toast('✓ 已新增：' + name);
-    }
-    await loadDB();
-    clearForm();
-  } catch(e) {
-    setSyncStatus('error', '儲存失敗');
-    toast('❌ 儲存失敗，請重試');
-    console.error(e);
-  }
+    if (existing?._docId) { await setDoc(doc(db,'products',existing._docId), p); toast('✓ 已更新：' + name); }
+    else { await addDoc(collection(db,'products'), p); toast('✓ 已新增：' + name); }
+    await loadAll(); clearProductForm();
+  } catch(e) { setSyncStatus('error','儲存失敗'); toast('❌ 儲存失敗'); }
 }
 
-// ── 刪除
 async function deleteProduct(docId, name) {
   if (!confirm(`確定要刪除「${name}」嗎？`)) return;
-  setSyncStatus('saving', '刪除中…');
-  try {
-    await deleteDoc(doc(db, COL, docId));
-    toast('已刪除：' + name);
-    await loadDB();
-    renderAll();
-  } catch(e) {
-    setSyncStatus('error', '刪除失敗');
-    toast('❌ 刪除失敗');
-  }
+  await deleteDoc(doc(db,'products',docId));
+  toast('已刪除：' + name); await loadAll(); renderAll();
 }
 
-// ── 編輯
 function editProduct(docId) {
-  const p = DB.find(x => x._docId === docId);
-  if (!p) return;
-  document.getElementById('f-id').value       = p.id || '';
-  document.getElementById('f-name').value     = p.name || '';
-  document.getElementById('f-style').value    = p.style || '';
-  document.getElementById('f-size').value     = p.size || '';
-  document.getElementById('f-len').value      = p.len || '';
-  document.getElementById('f-h').value        = p.h || '';
-  document.getElementById('f-w').value        = p.w || '';
-  document.getElementById('f-weight').value   = p.weight || '';
-  document.getElementById('f-material').value = p.material || '';
-  document.getElementById('f-expire').value   = p.expire || '';
-  document.getElementById('f-limit').value    = p.limit || '';
-  document.getElementById('f-note').value     = p.note || '';
+  const p = DB.find(x => x._docId === docId); if (!p) return;
+  ['id','name','style','size','len','h','w','weight','material','expire','limit','cost','note']
+    .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value = p[k] || ''; });
   document.getElementById('edit-hint').textContent = `編輯中：${p.id}`;
-  switchTab('add');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  switchTab('add'); window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function clearForm() {
-  ['id','name','style','size','len','h','w','weight','material','expire','limit','note']
+function clearProductForm() {
+  ['id','name','style','size','len','h','w','weight','material','expire','limit','cost','note']
     .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value=''; });
   document.getElementById('edit-hint').textContent = '';
 }
 
-// ── 高亮
 function hl(text, kw) {
-  if (!kw || !text) return String(text || '');
-  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return String(text).replace(new RegExp('(' + escaped + ')', 'gi'), '<mark>$1</mark>');
+  if (!kw || !text) return String(text||'');
+  return String(text).replace(new RegExp('('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');
 }
 
-// ── 商品卡
 function productCard(p, kw) {
-  const h    = s => kw ? hl(s||'', kw) : (s||'');
-  const dims = [p.len&&`長 ${p.len}`, p.h&&`高 ${p.h}`, p.w&&`寬 ${p.w}`].filter(Boolean).join(' × ');
+  const h = s => kw ? hl(s||'',kw) : (s||'');
+  const dims = [p.len&&`長 ${p.len}`,p.h&&`高 ${p.h}`,p.w&&`寬 ${p.w}`].filter(Boolean).join(' × ');
   const chips = [
-    p.size     && { label: '尺寸規格',      value: p.size },
-    dims       && { label: '長×高×寬 (cm)', value: dims   },
-    p.weight   && { label: '重量',          value: p.weight + ' g' },
-    p.material && { label: '材質',          value: p.material },
-    p.expire   && { label: '有效期限',      value: p.expire },
-    p.limit    && { label: '超取上限',      value: p.limit },
+    p.size     && {label:'尺寸規格',      value:p.size},
+    dims       && {label:'長×高×寬 (cm)', value:dims},
+    p.weight   && {label:'重量',          value:p.weight+' g'},
+    p.material && {label:'材質',          value:p.material},
+    p.expire   && {label:'有效期限',      value:p.expire},
+    p.limit    && {label:'超取上限',      value:p.limit},
+    p.cost     && {label:'商品成本',      value:'$'+p.cost},
   ].filter(Boolean);
-
-  const ts       = p.ts ? new Date(p.ts).toLocaleDateString('zh-Hant') : '';
-  const safeId   = (p._docId||'').replace(/'/g,"\\'");
-  const safeName = (p.name||'').replace(/'/g,"\\'");
-
+  const ts = p.ts ? new Date(p.ts).toLocaleDateString('zh-Hant') : '';
+  const sid = (p._docId||'').replace(/'/g,"\\'"), sn = (p.name||'').replace(/'/g,"\\'");
   return `<div class="result-card">
     <div class="card-top">
       <div>
         <div class="card-id">${h(p.id)}</div>
         <div class="card-name">${h(p.name)}</div>
-        ${p.style ? `<div class="card-style">${h(p.style)}</div>` : ''}
+        ${p.style?`<div class="card-style">${h(p.style)}</div>`:''}
       </div>
       <div class="card-actions">
-        ${ts ? `<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${ts}</span>` : ''}
-        <button class="btn-sm" onclick="window._edit('${safeId}')">編輯</button>
-        <button class="btn-sm btn-danger" onclick="window._del('${safeId}','${safeName}')">刪除</button>
+        ${ts?`<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${ts}</span>`:''}
+        <button class="btn-sm" onclick="window._pedit('${sid}')">編輯</button>
+        <button class="btn-sm btn-danger" onclick="window._pdel('${sid}','${sn}')">刪除</button>
       </div>
     </div>
-    ${chips.length || p.note ? `<div class="card-details">
-      ${chips.length ? `<div class="detail-row">${chips.map(c=>`
-        <div class="detail-chip">
-          <span class="chip-label">${c.label}</span>
-          <span class="chip-value">${h(c.value)}</span>
-        </div>`).join('')}</div>` : ''}
-      ${p.note ? `<div>
-        <div class="card-note-label">備註 / 注意事項</div>
-        <div class="card-note">${h(p.note)}</div>
-      </div>` : ''}
-    </div>` : ''}
+    ${chips.length||p.note?`<div class="card-details">
+      ${chips.length?`<div class="detail-row">${chips.map(c=>`<div class="detail-chip"><span class="chip-label">${c.label}</span><span class="chip-value">${h(c.value)}</span></div>`).join('')}</div>`:''}
+      ${p.note?`<div><div class="card-note-label">備註 / 注意事項</div><div class="card-note">${h(p.note)}</div></div>`:''}
+    </div>`:''}
   </div>`;
 }
 
-// ── 搜尋
 function doSearch(kw) {
   const container = document.getElementById('search-results');
   kw = (kw||'').trim();
-  if (!kw) {
-    container.innerHTML = '<div class="empty">輸入關鍵字開始搜尋<br><span style="font-size:12px">支援產品編號、名稱、材質、樣式、備註等所有欄位</span></div>';
-    return;
-  }
-  const lower   = kw.toLowerCase();
-  const results = DB.filter(p =>
-    [p.id,p.name,p.style,p.material,p.note,p.size,p.expire,p.limit,p.len,p.h,p.w,p.weight]
-      .some(v => v && String(v).toLowerCase().includes(lower))
-  );
-  if (!results.length) { container.innerHTML = `<div class="empty">找不到「${kw}」相關資料</div>`; return; }
-  container.innerHTML = `<div class="count-bar">找到 ${results.length} 筆結果</div>` + results.map(p=>productCard(p,kw)).join('');
+  if (!kw) { container.innerHTML='<div class="empty">輸入關鍵字開始搜尋<br><span style="font-size:12px">支援產品編號、名稱、材質、樣式、備註等所有欄位</span></div>'; return; }
+  const lower = kw.toLowerCase();
+  const results = DB.filter(p=>[p.id,p.name,p.style,p.material,p.note,p.size,p.expire,p.limit].some(v=>v&&String(v).toLowerCase().includes(lower)));
+  if (!results.length) { container.innerHTML=`<div class="empty">找不到「${kw}」相關資料</div>`; return; }
+  container.innerHTML=`<div class="count-bar">找到 ${results.length} 筆結果</div>`+results.map(p=>productCard(p,kw)).join('');
 }
 
-// ── 全部商品
 function renderAll() {
-  const el  = document.getElementById('all-list');
-  const cnt = document.getElementById('all-count');
-  cnt.textContent = `共 ${DB.length} 筆商品資料`;
-  if (!DB.length) { el.innerHTML = '<div class="empty">尚未新增任何商品</div>'; return; }
-  el.innerHTML = DB.map(p=>productCard(p,'')).join('');
+  const el=document.getElementById('all-list'), cnt=document.getElementById('all-count');
+  cnt.textContent=`共 ${DB.length} 筆商品資料`;
+  if (!DB.length) { el.innerHTML='<div class="empty">尚未新增任何商品</div>'; return; }
+  el.innerHTML=DB.map(p=>productCard(p,'')).join('');
 }
 
-// ── Tab 切換
+// ══ 異常記錄 ══
+
+let productRowCount = 0;
+
+function addProductRow(data) {
+  productRowCount++;
+  const id = 'pr-' + productRowCount;
+  const d = data || {};
+  const row = document.createElement('div');
+  row.className = 'product-row'; row.id = id;
+  row.innerHTML = `
+    <div class="field"><label>產品編號</label><input type="text" id="${id}-pid" placeholder="P-001" value="${d.pid||''}" oninput="autoFillProduct('${id}')"></div>
+    <div class="field"><label>產品名稱 / 樣式</label><input type="text" id="${id}-pname" placeholder="自動帶入" value="${d.pname||''}"></div>
+    <div class="field"><label>尺寸規格</label><input type="text" id="${id}-psize" placeholder="自動帶入" value="${d.psize||''}"></div>
+    <div class="field"><label>成本 (元)</label><input type="number" id="${id}-pcost" placeholder="自動帶入" value="${d.pcost||''}" oninput="calcTotal()"></div>
+    <button class="remove-btn btn-sm btn-danger" onclick="document.getElementById('${id}').remove();calcTotal()">✕</button>
+  `;
+  document.getElementById('product-rows').appendChild(row);
+}
+
+function autoFillProduct(rowId) {
+  const pid = document.getElementById(rowId+'-pid').value.trim();
+  const p = DB.find(x => x.id === pid);
+  if (p) {
+    document.getElementById(rowId+'-pname').value = [p.name, p.style].filter(Boolean).join(' / ');
+    document.getElementById(rowId+'-psize').value = p.size || '';
+    document.getElementById(rowId+'-pcost').value = p.cost || '';
+    calcTotal();
+  }
+}
+
+function calcTotal() {
+  const loss    = parseFloat(document.getElementById('a-loss').value)    || 0;
+  const freight = parseFloat(document.getElementById('a-freight').value) || 0;
+  document.getElementById('a-total').value = (loss + freight) || '';
+}
+
+function getProductRows() {
+  const rows = document.querySelectorAll('#product-rows .product-row');
+  return Array.from(rows).map(row => {
+    const id = row.id;
+    return {
+      pid:   document.getElementById(id+'-pid').value.trim(),
+      pname: document.getElementById(id+'-pname').value.trim(),
+      psize: document.getElementById(id+'-psize').value.trim(),
+      pcost: document.getElementById(id+'-pcost').value.trim(),
+    };
+  }).filter(r => r.pid || r.pname);
+}
+
+async function saveAnomaly() {
+  const date     = document.getElementById('a-date').value;
+  const platform = document.getElementById('a-platform').value;
+  const condition= document.getElementById('a-condition').value;
+  const type     = document.getElementById('a-type').value;
+  if (!date || !platform || !condition || !type) { toast('⚠ 請填寫日期、平台、商品狀態、問題類型'); return; }
+
+  const a = {
+    date, platform, condition, type,
+    by:         document.getElementById('a-by').value.trim(),
+    shipDate:   document.getElementById('a-ship-date').value,
+    order:      document.getElementById('a-order').value.trim(),
+    resolution: document.getElementById('a-resolution').value,
+    products:   getProductRows(),
+    loss:       parseFloat(document.getElementById('a-loss').value)    || 0,
+    freight:    parseFloat(document.getElementById('a-freight').value) || 0,
+    total:      parseFloat(document.getElementById('a-total').value)   || 0,
+    ts: Date.now()
+  };
+
+  setSyncStatus('saving','儲存中…');
+  try {
+    const editId = document.getElementById('a-edit-hint').dataset.docid;
+    if (editId) { await setDoc(doc(db,'anomalies',editId), a); toast('✓ 已更新記錄'); }
+    else { await addDoc(collection(db,'anomalies'), a); toast('✓ 已新增記錄'); }
+    await loadAll(); clearAnomalyForm(); switchAnomalyTab('list');
+  } catch(e) { setSyncStatus('error','儲存失敗'); toast('❌ 儲存失敗'); console.error(e); }
+}
+
+async function deleteAnomaly(docId) {
+  if (!confirm('確定要刪除這筆異常記錄嗎？')) return;
+  await deleteDoc(doc(db,'anomalies',docId));
+  toast('已刪除'); await loadAll();
+}
+
+function editAnomaly(docId) {
+  const a = ANOMALIES.find(x => x._docId === docId); if (!a) return;
+  document.getElementById('a-date').value       = a.date || '';
+  document.getElementById('a-by').value         = a.by || '';
+  document.getElementById('a-ship-date').value  = a.shipDate || '';
+  document.getElementById('a-order').value      = a.order || '';
+  document.getElementById('a-platform').value   = a.platform || '';
+  document.getElementById('a-condition').value  = a.condition || '';
+  document.getElementById('a-type').value       = a.type || '';
+  document.getElementById('a-resolution').value = a.resolution || '';
+  document.getElementById('a-loss').value       = a.loss || '';
+  document.getElementById('a-freight').value    = a.freight || '';
+  document.getElementById('a-total').value      = a.total || '';
+  document.getElementById('product-rows').innerHTML = '';
+  productRowCount = 0;
+  (a.products || []).forEach(p => addProductRow(p));
+  const hint = document.getElementById('a-edit-hint');
+  hint.textContent = `編輯中：${a.order || a.date}`;
+  hint.dataset.docid = docId;
+  switchAnomalyTab('add'); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function clearAnomalyForm() {
+  ['a-date','a-ship-date','a-order','a-loss','a-freight','a-total']
+    .forEach(k => { const el=document.getElementById(k); if(el) el.value=''; });
+  ['a-platform','a-condition','a-type','a-resolution']
+    .forEach(k => { const el=document.getElementById(k); if(el) el.value=''; });
+  document.getElementById('product-rows').innerHTML = '';
+  productRowCount = 0;
+  const hint = document.getElementById('a-edit-hint');
+  hint.textContent = ''; hint.dataset.docid = '';
+  if (currentUser) document.getElementById('a-by').value = currentUser.displayName || currentUser.email || '';
+  addProductRow();
+}
+
+const PLATFORM_COLORS = {
+  '蝦皮A':'#e3572a','蝦皮B':'#e3572a','蝦皮C':'#e3572a','蝦皮D':'#e3572a',
+  'MOMO大網':'#b8144b','MO店+':'#b8144b','PC24':'#2563eb','東森':'#16a34a','FRIDAY':'#7c3aed'
+};
+
+function anomalyCard(a) {
+  const color = PLATFORM_COLORS[a.platform] || 'var(--text2)';
+  const sid = (a._docId||'').replace(/'/g,"\\'");
+  const condTag = a.condition === '商品錯誤' ? 'error' : a.condition === '商品瑕疵' ? 'warn' : 'info';
+  const resTag  = a.resolution === '客可接受商品' ? 'ok' : 'warn';
+
+  return `<div class="anomaly-card">
+    <div class="anomaly-card-header">
+      <div class="anomaly-meta">
+        <span class="anomaly-id">${a.order || '無序號'}</span>
+        <span class="anomaly-platform" style="color:${color}">${a.platform}</span>
+        <span class="anomaly-date">${a.date}</span>
+        <span class="anomaly-by">by ${a.by || '—'}</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn-sm" onclick="window._aedit('${sid}')">編輯</button>
+        <button class="btn-sm btn-danger" onclick="window._adel('${sid}')">刪除</button>
+      </div>
+    </div>
+    <div class="anomaly-body">
+      <div class="anomaly-tags">
+        ${a.condition?`<span class="tag ${condTag}">${a.condition}</span>`:''}
+        ${a.type?`<span class="tag error">${a.type}</span>`:''}
+        ${a.resolution?`<span class="tag ${resTag}">${a.resolution}</span>`:''}
+        ${a.shipDate?`<span class="tag">出貨：${a.shipDate}</span>`:''}
+      </div>
+      ${(a.products||[]).length?`<div class="anomaly-products">
+        ${a.products.map(p=>`<div class="ap-row">
+          <span class="ap-id">${p.pid||'—'}</span>
+          <span>${p.pname||'—'}</span>
+          ${p.psize?`<span style="color:var(--text2);font-size:12px">${p.psize}</span>`:''}
+          ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${p.pcost}</span>`:''}
+        </div>`).join('')}
+      </div>`:''}
+      <div class="anomaly-loss">
+        ${a.loss?`<div class="loss-item"><span class="loss-label">損失金額</span><span class="loss-value">$${a.loss.toLocaleString()}</span></div>`:''}
+        ${a.freight?`<div class="loss-item"><span class="loss-label">運費成本</span><span class="loss-value">$${a.freight.toLocaleString()}</span></div>`:''}
+        <div class="loss-item loss-total"><span class="loss-label">總損失</span><span class="loss-value">$${(a.total||0).toLocaleString()}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAnomalyList() {
+  const platform = document.getElementById('filter-platform').value;
+  const status   = document.getElementById('filter-status').value;
+  const keyword  = (document.getElementById('filter-keyword').value||'').toLowerCase();
+  let list = ANOMALIES;
+  if (platform) list = list.filter(a => a.platform === platform);
+  if (status)   list = list.filter(a => a.condition === status);
+  if (keyword)  list = list.filter(a => [a.order, a.by, ...(a.products||[]).map(p=>p.pid+' '+p.pname)].join(' ').toLowerCase().includes(keyword));
+  document.getElementById('anomaly-count').textContent = `共 ${list.length} 筆記錄`;
+  if (!list.length) { document.getElementById('anomaly-list').innerHTML = '<div class="empty">目前沒有異常記錄</div>'; return; }
+  document.getElementById('anomaly-list').innerHTML = list.map(a=>anomalyCard(a)).join('');
+}
+
+// ══ 損失統計 ══
+
+function renderStats() {
+  const period   = document.getElementById('stats-period').value;
+  const platform = document.getElementById('stats-platform').value;
+  const now = new Date();
+
+  let list = ANOMALIES;
+  if (platform) list = list.filter(a => a.platform === platform);
+  if (period !== 'all') {
+    list = list.filter(a => {
+      if (!a.date) return false;
+      const d = new Date(a.date);
+      if (period === 'month')  return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+      if (period === '3month') return (now - d) <= 90*24*60*60*1000;
+      if (period === 'year')   return d.getFullYear()===now.getFullYear();
+      return true;
+    });
+  }
+
+  const totalLoss    = list.reduce((s,a) => s+(a.loss||0), 0);
+  const totalFreight = list.reduce((s,a) => s+(a.freight||0), 0);
+  const totalAll     = list.reduce((s,a) => s+(a.total||0), 0);
+
+  document.getElementById('stats-summary').innerHTML = `
+    <div class="summary-card"><div class="summary-label">異常筆數</div><div class="summary-value">${list.length}</div></div>
+    <div class="summary-card"><div class="summary-label">損失金額</div><div class="summary-value red">$${totalLoss.toLocaleString()}</div></div>
+    <div class="summary-card"><div class="summary-label">運費成本</div><div class="summary-value red">$${totalFreight.toLocaleString()}</div></div>
+    <div class="summary-card"><div class="summary-label">總損失</div><div class="summary-value red">$${totalAll.toLocaleString()}</div></div>
+  `;
+
+  // 平台分析
+  const byPlatform = {};
+  list.forEach(a => {
+    if (!byPlatform[a.platform]) byPlatform[a.platform] = {count:0, total:0};
+    byPlatform[a.platform].count++;
+    byPlatform[a.platform].total += a.total||0;
+  });
+
+  const byType = {};
+  list.forEach(a => {
+    if (!byType[a.type]) byType[a.type] = 0;
+    byType[a.type]++;
+  });
+
+  let html = '';
+  if (Object.keys(byPlatform).length) {
+    html += `<div class="form-card" style="margin-bottom:1rem"><div class="form-section"><div class="section-label">各平台損失</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="color:var(--text3);font-size:11px;font-family:var(--mono)"><td style="padding:6px 4px">平台</td><td style="padding:6px 4px;text-align:right">筆數</td><td style="padding:6px 4px;text-align:right">總損失</td></tr>
+        ${Object.entries(byPlatform).sort((a,b)=>b[1].total-a[1].total).map(([p,v])=>`
+        <tr style="border-top:1px solid var(--border)">
+          <td style="padding:8px 4px;font-weight:500">${p}</td>
+          <td style="padding:8px 4px;text-align:right;color:var(--text2)">${v.count}</td>
+          <td style="padding:8px 4px;text-align:right;color:var(--danger-text);font-weight:600">$${v.total.toLocaleString()}</td>
+        </tr>`).join('')}
+      </table>
+    </div></div>`;
+  }
+
+  if (Object.keys(byType).length) {
+    html += `<div class="form-card"><div class="form-section"><div class="section-label">問題類型分佈</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:18px;font-weight:700;color:var(--danger-text)">${c}</span>
+          <span style="font-size:11px;color:var(--text2)">${t}</span>
+        </div>`).join('')}
+      </div>
+    </div></div>`;
+  }
+
+  if (!html) html = '<div class="empty">此期間沒有異常記錄</div>';
+  document.getElementById('stats-breakdown').innerHTML = html;
+}
+
+// ── Tab Switching ──
+function switchMain(t) {
+  document.querySelectorAll('.main-tab').forEach((el,i)=>el.classList.toggle('active',['products','anomaly','stats'][i]===t));
+  document.querySelectorAll('.main-panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('main-'+t).classList.add('active');
+  if (t==='stats') renderStats();
+  if (t==='anomaly') renderAnomalyList();
+}
+
 function switchTab(t) {
-  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', ['search','add','all'][i]===t));
-  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('#main-products .tab').forEach((el,i)=>el.classList.toggle('active',['search','add','all'][i]===t));
+  document.querySelectorAll('#main-products .panel').forEach(el=>el.classList.remove('active'));
   document.getElementById('panel-'+t).classList.add('active');
   if (t==='all') renderAll();
   if (t==='search') doSearch(document.getElementById('search-input').value);
 }
 
-// ── Toast
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+function switchAnomalyTab(t) {
+  document.querySelectorAll('#main-anomaly .tab').forEach((el,i)=>el.classList.toggle('active',['list','add'][i]===t));
+  document.querySelectorAll('#main-anomaly .panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('apanel-'+t).classList.add('active');
+  if (t==='list') renderAnomalyList();
 }
 
-// ── 掛到全域
-window.switchTab    = switchTab;
-window.clearForm    = clearForm;
-window.saveProduct  = saveProduct;
-window.doSearch     = doSearch;
-window.loginGoogle  = loginGoogle;
-window.loginEmail   = loginEmail;
-window.logout       = logout;
-window._edit        = editProduct;
-window._del         = deleteProduct;
+function toast(msg) {
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+// ── Global Bindings ──
+window.switchMain=switchMain; window.switchTab=switchTab; window.switchAnomalyTab=switchAnomalyTab;
+window.saveProduct=saveProduct; window.clearProductForm=clearProductForm; window.doSearch=doSearch;
+window.saveAnomaly=saveAnomaly; window.clearAnomalyForm=clearAnomalyForm;
+window.addProductRow=addProductRow; window.autoFillProduct=autoFillProduct; window.calcTotal=calcTotal;
+window.renderAnomalyList=renderAnomalyList; window.renderStats=renderStats;
+window.loginGoogle=loginGoogle; window.loginEmail=loginEmail; window.logout=logout;
+window._pedit=editProduct; window._pdel=deleteProduct;
+window._aedit=editAnomaly; window._adel=deleteAnomaly;
+
+// ── Set today's date & init product row ──
+document.getElementById('a-date').value = new Date().toISOString().split('T')[0];
+addProductRow();
 </script>
 </body>
 </html>
