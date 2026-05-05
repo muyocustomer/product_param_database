@@ -157,7 +157,7 @@ button:active { transform: scale(.98); }
 
 /* ── Product rows in anomaly form ── */
 .product-rows { display: flex; flex-direction: column; gap: 8px; }
-.product-row { display: grid; grid-template-columns: 120px 1fr 120px 120px auto; gap: 8px; align-items: end; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.product-row { display: grid; grid-template-columns: 110px 1fr 1fr 120px 120px auto; gap: 8px; align-items: end; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
 .product-row .remove-btn { padding: 6px 10px; font-size: 12px; color: var(--danger-text); border-color: transparent; }
 .product-row .remove-btn:hover { background: var(--danger-bg); }
 .add-product-btn { margin-top: 8px; font-size: 13px; color: var(--accent2); border-color: var(--accent2); }
@@ -271,9 +271,26 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
             <div class="form-grid">
               <div class="field"><label>材質</label><input id="f-material" type="text" placeholder="例：棉80% 麻20%"></div>
               <div class="field"><label>有效期限</label><input id="f-expire" type="text" placeholder="例：2年 / 無期限"></div>
-              <div class="field"><label>超取上限</label><input id="f-limit" type="text" placeholder="例：最多3件"></div>
-              <div class="field"><label>商品成本 (元)</label><input id="f-cost" type="number" placeholder="例：150"></div>
-              <div class="field full"><label>其他細節（客人常問的問題、注意事項）</label><textarea id="f-note" placeholder="例：此商品超商取貨最多3件；洗滌請手洗…"></textarea></div>
+              <div class="field full"><label>其他細節（客人常問的問題、注意事項）</label><textarea id="f-note" placeholder="例：洗滌請手洗，勿機洗…"></textarea></div>
+            </div>
+          </div>
+          <div class="form-section" id="variant-section">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div class="section-label" style="margin-bottom:0">規格與成本</div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;font-weight:400">
+                <input type="checkbox" id="f-has-variants" onchange="toggleVariants()" style="width:auto;accent-color:var(--accent2)">
+                此商品有多種規格
+              </label>
+            </div>
+            <div id="single-variant" style="margin-top:1rem">
+              <div class="form-grid">
+                <div class="field"><label>超取上限</label><input id="f-limit" type="text" placeholder="例：最多3件"></div>
+                <div class="field"><label>商品成本 (元)</label><input id="f-cost" type="number" placeholder="例：150"></div>
+              </div>
+            </div>
+            <div id="multi-variant" style="display:none;margin-top:1rem">
+              <div id="variant-rows" style="display:flex;flex-direction:column;gap:8px"></div>
+              <button class="add-product-btn" style="margin-top:8px" onclick="addVariantRow()">＋ 新增規格</button>
             </div>
           </div>
           <div class="form-footer">
@@ -504,10 +521,48 @@ async function loadAll() {
 
 // ══ 商品資料庫 ══
 
+function toggleVariants() {
+  const on = document.getElementById('f-has-variants').checked;
+  document.getElementById('single-variant').style.display = on ? 'none' : 'block';
+  document.getElementById('multi-variant').style.display  = on ? 'block' : 'none';
+  if (on && document.querySelectorAll('#variant-rows .vrow').length === 0) addVariantRow();
+}
+
+let variantRowCount = 0;
+function addVariantRow(data) {
+  variantRowCount++;
+  const vid = 'vr-' + variantRowCount;
+  const d = data || {};
+  const row = document.createElement('div');
+  row.className = 'product-row vrow'; row.id = vid;
+  row.style.gridTemplateColumns = '1fr 1fr 120px 120px auto';
+  row.innerHTML = `
+    <div class="field"><label>樣式 / 顏色</label><input type="text" id="${vid}-vstyle" placeholder="例：深灰" value="${d.vstyle||''}"></div>
+    <div class="field"><label>尺寸規格</label><input type="text" id="${vid}-vsize" placeholder="例：S / M" value="${d.vsize||''}"></div>
+    <div class="field"><label>超取上限</label><input type="text" id="${vid}-vlimit" placeholder="例：3件" value="${d.vlimit||''}"></div>
+    <div class="field"><label>成本 (元)</label><input type="number" id="${vid}-vcost" placeholder="0" value="${d.vcost||''}"></div>
+    <button class="remove-btn btn-sm btn-danger" onclick="document.getElementById('${vid}').remove()">✕</button>
+  `;
+  document.getElementById('variant-rows').appendChild(row);
+}
+
+function getVariantRows() {
+  return Array.from(document.querySelectorAll('#variant-rows .vrow')).map(row => {
+    const vid = row.id;
+    return {
+      vstyle: document.getElementById(vid+'-vstyle').value.trim(),
+      vsize:  document.getElementById(vid+'-vsize').value.trim(),
+      vlimit: document.getElementById(vid+'-vlimit').value.trim(),
+      vcost:  document.getElementById(vid+'-vcost').value.trim(),
+    };
+  }).filter(v => v.vstyle || v.vsize);
+}
+
 async function saveProduct() {
   const id = document.getElementById('f-id').value.trim();
   const name = document.getElementById('f-name').value.trim();
   if (!id || !name) { toast('⚠ 請填寫產品編號與名稱'); return; }
+  const hasVariants = document.getElementById('f-has-variants').checked;
   const p = {
     id, name,
     style: document.getElementById('f-style').value.trim(),
@@ -518,9 +573,11 @@ async function saveProduct() {
     weight:   document.getElementById('f-weight').value.trim(),
     material: document.getElementById('f-material').value.trim(),
     expire:   document.getElementById('f-expire').value.trim(),
-    limit:    document.getElementById('f-limit').value.trim(),
-    cost:     document.getElementById('f-cost').value.trim(),
     note:     document.getElementById('f-note').value.trim(),
+    hasVariants,
+    variants: hasVariants ? getVariantRows() : [],
+    limit:    hasVariants ? '' : document.getElementById('f-limit').value.trim(),
+    cost:     hasVariants ? '' : document.getElementById('f-cost').value.trim(),
     ts: Date.now()
   };
   setSyncStatus('saving', '儲存中…');
@@ -542,6 +599,13 @@ function editProduct(docId) {
   const p = DB.find(x => x._docId === docId); if (!p) return;
   ['id','name','style','size','len','h','w','weight','material','expire','limit','cost','note']
     .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value = p[k] || ''; });
+  const hasV = !!p.hasVariants;
+  document.getElementById('f-has-variants').checked = hasV;
+  document.getElementById('single-variant').style.display = hasV ? 'none' : 'block';
+  document.getElementById('multi-variant').style.display  = hasV ? 'block' : 'none';
+  document.getElementById('variant-rows').innerHTML = '';
+  variantRowCount = 0;
+  if (hasV) (p.variants||[]).forEach(v => addVariantRow(v));
   document.getElementById('edit-hint').textContent = `編輯中：${p.id}`;
   switchTab('add'); window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -550,6 +614,11 @@ function clearProductForm() {
   ['id','name','style','size','len','h','w','weight','material','expire','limit','cost','note']
     .forEach(k => { const el = document.getElementById('f-'+k); if(el) el.value=''; });
   document.getElementById('edit-hint').textContent = '';
+  document.getElementById('f-has-variants').checked = false;
+  document.getElementById('single-variant').style.display = 'block';
+  document.getElementById('multi-variant').style.display  = 'none';
+  document.getElementById('variant-rows').innerHTML = '';
+  variantRowCount = 0;
 }
 
 function hl(text, kw) {
@@ -566,11 +635,23 @@ function productCard(p, kw) {
     p.weight   && {label:'重量',          value:p.weight+' g'},
     p.material && {label:'材質',          value:p.material},
     p.expire   && {label:'有效期限',      value:p.expire},
-    p.limit    && {label:'超取上限',      value:p.limit},
-    p.cost     && {label:'商品成本',      value:'$'+p.cost},
+    !p.hasVariants && p.limit && {label:'超取上限', value:p.limit},
+    !p.hasVariants && p.cost  && {label:'商品成本', value:'$'+p.cost},
   ].filter(Boolean);
   const ts = p.ts ? new Date(p.ts).toLocaleDateString('zh-Hant') : '';
-  const sid = (p._docId||'').replace(/'/g,"\\'"), sn = (p.name||'').replace(/'/g,"\\'");
+  const sid = (p._docId||'').replace(/'/g,"\'"), sn = (p.name||'').replace(/'/g,"\'");
+  const variantTable = p.hasVariants && (p.variants||[]).length ? `
+    <div style="margin-top:8px">
+      <div class="card-note-label">規格一覽</div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+        ${(p.variants||[]).map(v=>`<div style="display:flex;flex-wrap:wrap;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:13px">
+          ${v.vstyle?`<span style="font-weight:500">${h(v.vstyle)}</span>`:''}
+          ${v.vsize?`<span style="color:var(--text2)">${h(v.vsize)}</span>`:''}
+          ${v.vlimit?`<span style="color:var(--text3);font-size:12px">超取 ${h(v.vlimit)}</span>`:''}
+          ${v.vcost?`<span style="color:var(--accent2);font-size:12px">成本 $${h(v.vcost)}</span>`:''}
+        </div>`).join('')}
+      </div>
+    </div>` : '';
   return `<div class="result-card">
     <div class="card-top">
       <div>
@@ -584,8 +665,9 @@ function productCard(p, kw) {
         <button class="btn-sm btn-danger" onclick="window._pdel('${sid}','${sn}')">刪除</button>
       </div>
     </div>
-    ${chips.length||p.note?`<div class="card-details">
+    ${chips.length||p.note||variantTable?`<div class="card-details">
       ${chips.length?`<div class="detail-row">${chips.map(c=>`<div class="detail-chip"><span class="chip-label">${c.label}</span><span class="chip-value">${h(c.value)}</span></div>`).join('')}</div>`:''}
+      ${variantTable}
       ${p.note?`<div><div class="card-note-label">備註 / 注意事項</div><div class="card-note">${h(p.note)}</div></div>`:''}
     </div>`:''}
   </div>`;
@@ -620,8 +702,9 @@ function addProductRow(data) {
   row.className = 'product-row'; row.id = id;
   row.innerHTML = `
     <div class="field"><label>產品編號</label><input type="text" id="${id}-pid" placeholder="P-001" value="${d.pid||''}" oninput="autoFillProduct('${id}')"></div>
-    <div class="field"><label>產品名稱 / 樣式</label><input type="text" id="${id}-pname" placeholder="自動帶入" value="${d.pname||''}"></div>
-    <div class="field"><label>尺寸規格</label><input type="text" id="${id}-psize" placeholder="自動帶入" value="${d.psize||''}"></div>
+    <div class="field" style="grid-column:span 2"><label>產品名稱</label><input type="text" id="${id}-pname" placeholder="自動帶入" value="${d.pname||''}" readonly style="color:var(--text2)"><select id="${id}-pvariant" style="display:none;margin-top:4px;width:100%" onchange="selectVariant('${id}')"><option value="">選擇規格</option></select></div>
+    <div class="field"><label>樣式 / 顏色</label><input type="text" id="${id}-pstyle" placeholder="手動輸入" value="${d.pstyle||''}"></div>
+    <div class="field"><label>尺寸規格</label><input type="text" id="${id}-psize" placeholder="手動輸入" value="${d.psize||''}"></div>
     <div class="field"><label>成本 (元)</label><input type="number" id="${id}-pcost" placeholder="自動帶入" value="${d.pcost||''}" oninput="calcTotal()"></div>
     <button class="remove-btn btn-sm btn-danger" onclick="document.getElementById('${id}').remove();calcTotal()">✕</button>
   `;
@@ -631,11 +714,39 @@ function addProductRow(data) {
 function autoFillProduct(rowId) {
   const pid = document.getElementById(rowId+'-pid').value.trim();
   const p = DB.find(x => x.id === pid);
+  const variantSel = document.getElementById(rowId+'-pvariant');
   if (p) {
-    document.getElementById(rowId+'-pname').value = [p.name, p.style].filter(Boolean).join(' / ');
-    document.getElementById(rowId+'-psize').value = p.size || '';
-    document.getElementById(rowId+'-pcost').value = p.cost || '';
+    document.getElementById(rowId+'-pname').value = p.name || '';
+    // 有多規格 → 顯示規格下拉，清空成本等候選取
+    if (p.hasVariants && (p.variants||[]).length) {
+      if (variantSel) {
+        variantSel.style.display = 'block';
+        variantSel.innerHTML = '<option value="">選擇規格</option>' +
+          p.variants.map((v,i) => `<option value="${i}">${[v.vstyle,v.vsize].filter(Boolean).join(' / ')}</option>`).join('');
+      }
+      document.getElementById(rowId+'-pcost').value = '';
+    } else {
+      if (variantSel) variantSel.style.display = 'none';
+      document.getElementById(rowId+'-pcost').value = p.cost || '';
+    }
     calcTotal();
+  } else {
+    if (variantSel) { variantSel.style.display = 'none'; variantSel.innerHTML = ''; }
+  }
+}
+
+function selectVariant(rowId) {
+  const pid = document.getElementById(rowId+'-pid').value.trim();
+  const p = DB.find(x => x.id === pid);
+  const idx = document.getElementById(rowId+'-pvariant').value;
+  if (p && p.hasVariants && idx !== '') {
+    const v = p.variants[parseInt(idx)];
+    if (v) {
+      document.getElementById(rowId+'-pstyle').value = v.vstyle || '';
+      document.getElementById(rowId+'-psize').value  = v.vsize  || '';
+      document.getElementById(rowId+'-pcost').value  = v.vcost  || '';
+      calcTotal();
+    }
   }
 }
 
@@ -652,6 +763,7 @@ function getProductRows() {
     return {
       pid:   document.getElementById(id+'-pid').value.trim(),
       pname: document.getElementById(id+'-pname').value.trim(),
+      pstyle:document.getElementById(id+'-pstyle').value.trim(),
       psize: document.getElementById(id+'-psize').value.trim(),
       pcost: document.getElementById(id+'-pcost').value.trim(),
     };
@@ -763,6 +875,7 @@ function anomalyCard(a) {
         ${a.products.map(p=>`<div class="ap-row">
           <span class="ap-id">${p.pid||'—'}</span>
           <span>${p.pname||'—'}</span>
+          ${p.pstyle?`<span style="color:var(--text2);font-size:12px">${p.pstyle}</span>`:''}
           ${p.psize?`<span style="color:var(--text2);font-size:12px">${p.psize}</span>`:''}
           ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${p.pcost}</span>`:''}
         </div>`).join('')}
@@ -898,7 +1011,7 @@ function toast(msg) {
 window.switchMain=switchMain; window.switchTab=switchTab; window.switchAnomalyTab=switchAnomalyTab;
 window.saveProduct=saveProduct; window.clearProductForm=clearProductForm; window.doSearch=doSearch;
 window.saveAnomaly=saveAnomaly; window.clearAnomalyForm=clearAnomalyForm;
-window.addProductRow=addProductRow; window.autoFillProduct=autoFillProduct; window.calcTotal=calcTotal;
+window.addProductRow=addProductRow; window.autoFillProduct=autoFillProduct; window.calcTotal=calcTotal; window.selectVariant=selectVariant; window.toggleVariants=toggleVariants; window.addVariantRow=addVariantRow;
 window.renderAnomalyList=renderAnomalyList; window.renderStats=renderStats;
 window.loginGoogle=loginGoogle; window.loginEmail=loginEmail; window.logout=logout;
 window._pedit=editProduct; window._pdel=deleteProduct;
