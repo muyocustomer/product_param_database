@@ -60,7 +60,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 
 /* ── Main Tabs ── */
 .container { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
-.main-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 5px; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+.main-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 5px; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
 .main-tab { padding: 9px 8px; border: none; border-radius: var(--radius); background: transparent; cursor: pointer; font-size: 13px; font-family: var(--sans); color: var(--text2); font-weight: 500; transition: all .15s; }
 .main-tab:hover { background: var(--bg2); color: var(--text); }
 .main-tab.active { background: var(--accent-bg); color: #fff; }
@@ -177,6 +177,41 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
 .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
 .filter-row select, .filter-row input { flex: 1; min-width: 120px; max-width: 200px; }
 
+/* ── Import Wizard ── */
+.import-target { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.import-target-btn { flex: 1; min-width: 160px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); cursor: pointer; text-align: left; transition: all .15s; box-shadow: var(--shadow); }
+.import-target-btn:hover { border-color: var(--border2); }
+.import-target-btn.active { border-color: var(--accent2); background: var(--tag-bg); }
+.import-target-btn .itb-title { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.import-target-btn .itb-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.import-dropzone { border: 1.5px dashed var(--border2); border-radius: var(--radius-lg); padding: 1rem 1.25rem; background: var(--bg); }
+.import-file-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.import-file-row label.file-btn { font-size: 12px; padding: 7px 14px; border: 1px solid var(--border2); border-radius: var(--radius); cursor: pointer; background: var(--surface); color: var(--text); font-weight: 500; transition: all .15s; }
+.import-file-row label.file-btn:hover { background: var(--bg2); }
+.import-file-row .file-name { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+.import-textarea { width: 100%; min-height: 120px; font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+.map-grid { display: flex; flex-direction: column; gap: 8px; }
+.map-row { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: center; }
+.map-row .map-label { font-size: 12px; color: var(--text); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+.map-row .map-label .req { color: var(--danger-text); }
+.map-row .map-label .ftype { font-size: 10px; font-family: var(--mono); color: var(--text3); }
+.preview-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.preview-table th { background: var(--bg2); color: var(--text2); font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+.preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+.preview-table tr.invalid td { background: var(--danger-bg); }
+.preview-table td.muted { color: var(--text3); }
+.import-stat-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 1rem 0; }
+.import-stat { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; font-size: 12px; color: var(--text2); }
+.import-stat b { font-size: 16px; color: var(--text); font-weight: 700; display: block; }
+.import-stat.warn b { color: var(--warn-text); }
+.import-options { display: flex; flex-direction: column; gap: 8px; }
+.import-options label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); font-weight: 400; cursor: pointer; }
+.import-options input[type=checkbox] { width: auto; accent-color: var(--accent2); }
+.import-result { padding: 1.25rem 1.5rem; }
+.result-line { display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 6px 0; }
+.result-num { font-family: var(--mono); font-weight: 700; font-size: 18px; min-width: 50px; }
+
 @media (max-width: 600px) {
   .container { padding: 1rem; }
   header { padding: 0 1rem; }
@@ -184,6 +219,8 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
   .sync-pill { display: none; }
   .product-row { grid-template-columns: 1fr 1fr; }
   .form-grid-3 { grid-template-columns: 1fr 1fr; }
+  .main-tabs { grid-template-columns: repeat(2, 1fr); }
+  .map-row { grid-template-columns: 1fr; gap: 4px; }
 }
 </style>
 </head>
@@ -230,6 +267,7 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
       <button class="main-tab active" onclick="switchMain('products')">📦 商品資料庫</button>
       <button class="main-tab" onclick="switchMain('anomaly')">⚠️ 異常記錄</button>
       <button class="main-tab" onclick="switchMain('stats')">📊 損失統計</button>
+      <button class="main-tab" onclick="switchMain('import')">📥 匯入</button>
     </div>
 
     <!-- ══ 商品資料庫 ══ -->
@@ -424,6 +462,73 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
       <div class="summary-grid" id="stats-summary"></div>
       <div id="stats-breakdown"></div>
     </div>
+
+    <!-- ══ 匯入 ══ -->
+    <div id="main-import" class="main-panel">
+      <!-- 步驟 1：選擇目標 + 貼上/上傳 -->
+      <div class="section-label" style="margin-bottom:.75rem">① 選擇匯入目標</div>
+      <div class="import-target">
+        <button class="import-target-btn active" id="imp-tgt-products" onclick="setImportTarget('products')">
+          <div class="itb-title">📦 商品資料庫</div>
+          <div class="itb-sub">匯入舊商品（產品編號、名稱、尺寸、成本…）</div>
+        </button>
+        <button class="import-target-btn" id="imp-tgt-anomaly" onclick="setImportTarget('anomaly')">
+          <div class="itb-title">⚠️ 異常記錄</div>
+          <div class="itb-sub">匯入之前登記的異常（日期、平台、損失…）</div>
+        </button>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section">
+          <div class="section-label">② 貼上 Notion 資料 或 上傳 CSV</div>
+          <div class="import-dropzone">
+            <div class="import-file-row">
+              <label class="file-btn" for="imp-file">📁 選擇 CSV / TSV 檔</label>
+              <input type="file" id="imp-file" accept=".csv,.tsv,.txt" style="display:none" onchange="onImportFile(event)">
+              <span class="file-name" id="imp-file-name"></span>
+            </div>
+            <textarea class="import-textarea" id="imp-raw" placeholder="從 Notion 匯出 CSV 後用記事本開啟貼進來，或直接在 Notion 框選表格（含標題列）複製後貼上即可。第一列必須是欄位標題。"></textarea>
+            <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <span class="form-hint" id="imp-parse-hint"></span>
+              <button class="btn-primary" onclick="parseImport()">解析資料 →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 步驟 3：欄位對應 -->
+      <div class="form-card" id="imp-map-card" style="display:none">
+        <div class="form-section">
+          <div class="section-label">③ 欄位對應（系統已自動猜測，可手動調整）</div>
+          <div class="map-grid" id="imp-map-grid"></div>
+        </div>
+        <div class="form-section">
+          <div class="section-label">預覽（前 8 筆）</div>
+          <div class="import-stat-bar" id="imp-stat-bar"></div>
+          <div class="preview-wrap"><table class="preview-table" id="imp-preview"></table></div>
+        </div>
+        <div class="form-section" id="imp-options-section">
+          <div class="section-label">匯入選項</div>
+          <div class="import-options" id="imp-options"></div>
+        </div>
+        <div class="form-footer">
+          <span class="form-hint" id="imp-final-hint"></span>
+          <div class="btn-group">
+            <button onclick="resetImport()">重新開始</button>
+            <button class="btn-primary" id="imp-run-btn" onclick="runImport()">開始匯入</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 步驟 4：結果 -->
+      <div class="form-card" id="imp-result-card" style="display:none">
+        <div class="import-result" id="imp-result"></div>
+        <div class="form-footer">
+          <span class="form-hint"></span>
+          <div class="btn-group"><button class="btn-primary" onclick="resetImport()">再匯入一批</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -431,7 +536,7 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy }
+import { getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider,
          signInWithEmailAndPassword, signOut }
@@ -984,9 +1089,327 @@ function renderStats() {
   document.getElementById('stats-breakdown').innerHTML = html;
 }
 
+// ══ 匯入（Notion CSV / TSV）══
+
+const PRODUCT_FIELDS = [
+  {key:'id',      label:'產品編號', req:true, aliases:['產品編號','商品編號','編號','料號','貨號','品號','sku','id','itemno','itemcode','款號']},
+  {key:'name',    label:'產品名稱', req:true, aliases:['產品名稱','商品名稱','名稱','品名','name','title','商品']},
+  {key:'style',   label:'樣式/顏色', aliases:['樣式','顏色','色','款式','style','color','colour','變化','選項']},
+  {key:'size',    label:'尺寸規格', aliases:['尺寸規格','尺寸','規格','size','spec']},
+  {key:'len',     label:'長度(cm)', type:'num', aliases:['長度','長','length','長cm','l']},
+  {key:'h',       label:'高度(cm)', type:'num', aliases:['高度','高','height','高cm']},
+  {key:'w',       label:'寬度(cm)', type:'num', aliases:['寬度','寬','width','寬cm']},
+  {key:'weight',  label:'重量(g)', type:'num', aliases:['重量','weight','克重','重']},
+  {key:'material',label:'材質', aliases:['材質','material','成分','質料']},
+  {key:'expire',  label:'有效期限', aliases:['有效期限','效期','保存期限','expire','期限']},
+  {key:'limit',   label:'超取上限', aliases:['超取上限','超取','上限','limit','最多']},
+  {key:'cost',    label:'商品成本', type:'num', aliases:['商品成本','成本','cost','進價','單價','price','售價']},
+  {key:'note',    label:'備註/細節', aliases:['備註','其他細節','注意事項','說明','note','remark','memo','描述','desc','description','常見問題']},
+];
+
+const ANOMALY_FIELDS = [
+  {key:'date',      label:'登記日期', req:true, type:'date', aliases:['登記日期','日期','date','建立日期','記錄日期','登記時間','時間','建立時間']},
+  {key:'platform',  label:'平台', req:true, aliases:['平台','platform','通路','賣場','店家','商城','通路平台']},
+  {key:'condition', label:'商品狀態', aliases:['商品狀態','狀態','condition','status']},
+  {key:'type',      label:'問題類型', aliases:['問題類型','類型','type','問題','錯誤類型','原因','異常類型']},
+  {key:'by',        label:'登記人', aliases:['登記人','登記者','by','負責人','處理人','建立者','人員','經手人']},
+  {key:'shipDate',  label:'出貨日期', type:'date', aliases:['出貨日期','出貨日','shipdate','寄出日期','發貨日期','出貨']},
+  {key:'order',     label:'交易序號', aliases:['交易序號','序號','訂單編號','訂單','order','orderno','單號','交易','訂單號','物流單號']},
+  {key:'resolution',label:'後續處理', aliases:['後續處理','後續處理狀況','處理狀況','處理','解決','resolution','處理方式']},
+  {key:'pid',       label:'相關產品編號', aliases:['產品編號','商品編號','編號','料號','sku','pid','相關商品']},
+  {key:'pname',     label:'相關產品名稱', aliases:['產品名稱','商品名稱','品名','名稱','pname']},
+  {key:'pstyle',    label:'相關樣式/顏色', aliases:['樣式','顏色','款式','style']},
+  {key:'psize',     label:'相關尺寸規格', aliases:['尺寸','規格','size']},
+  {key:'pcost',     label:'相關商品成本', type:'num', aliases:['成本','商品成本','cost','進價']},
+  {key:'loss',      label:'損失金額', type:'num', aliases:['損失金額','損失','loss','金額','賠償']},
+  {key:'freight',   label:'運費成本', type:'num', aliases:['運費成本','運費','freight','運費損失','shipping']},
+  {key:'total',     label:'總損失', type:'num', aliases:['總損失金額','總損失','total','合計','總金額','總計']},
+];
+
+let IMPORT = { target:'products', headers:[], rows:[], map:{} };
+
+function setImportTarget(t) {
+  IMPORT.target = t;
+  document.getElementById('imp-tgt-products').classList.toggle('active', t==='products');
+  document.getElementById('imp-tgt-anomaly').classList.toggle('active', t==='anomaly');
+  // 若已解析過，重新自動對應並渲染
+  if (IMPORT.headers.length) {
+    IMPORT.map = autoMap(currentFields(), IMPORT.headers);
+    renderMapping();
+  }
+}
+
+function currentFields() { return IMPORT.target==='products' ? PRODUCT_FIELDS : ANOMALY_FIELDS; }
+
+function onImportFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  document.getElementById('imp-file-name').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = ev => { document.getElementById('imp-raw').value = ev.target.result; parseImport(); };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// 偵測分隔符號（Tab / 逗號）
+function sniffDelim(text) {
+  const firstLine = text.replace(/^\uFEFF/,'').split(/\r?\n/)[0] || '';
+  const tabs = (firstLine.match(/\t/g)||[]).length;
+  const commas = (firstLine.match(/,/g)||[]).length;
+  return (tabs > 0 && tabs >= commas) ? '\t' : ',';
+}
+
+// RFC4180 風格解析（支援引號、跳脫 ""、欄內換行/逗號、BOM、\r\n）
+function parseDelimited(text, delim) {
+  text = text.replace(/^\uFEFF/,'');
+  const rows = []; let row = [], field = '', inQ = false, i = 0; const n = text.length;
+  while (i < n) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i+1] === '"') { field+='"'; i+=2; continue; } inQ=false; i++; continue; }
+      field += c; i++; continue;
+    }
+    if (c === '"') { inQ = true; i++; continue; }
+    if (c === delim) { row.push(field); field=''; i++; continue; }
+    if (c === '\r') { i++; continue; }
+    if (c === '\n') { row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+    field += c; i++;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+const norm = s => String(s||'').toLowerCase().replace(/[\s_\-\/()（）.、，,:：·]/g,'').trim();
+
+function autoMap(fields, headers) {
+  const H = headers.map(norm); const used = new Set(); const map = {};
+  for (const f of fields) {                       // pass 1：完全相符
+    for (const a of f.aliases) {
+      const na = norm(a);
+      const idx = H.findIndex((h,i)=>!used.has(i) && h===na);
+      if (idx>=0) { map[f.key]=idx; used.add(idx); break; }
+    }
+  }
+  for (const f of fields) {                        // pass 2：包含
+    if (map[f.key]!=null) continue;
+    for (const a of f.aliases) {
+      const na = norm(a); if (!na) continue;
+      const idx = H.findIndex((h,i)=>!used.has(i) && h && (h.includes(na)||na.includes(h)));
+      if (idx>=0) { map[f.key]=idx; used.add(idx); break; }
+    }
+  }
+  return map;
+}
+
+function parseImport() {
+  const raw = document.getElementById('imp-raw').value;
+  const hint = document.getElementById('imp-parse-hint');
+  if (!raw.trim()) { hint.textContent = '⚠ 請先貼上資料或上傳檔案'; return; }
+  const delim = sniffDelim(raw);
+  const all = parseDelimited(raw, delim).filter(r => r.some(c => String(c).trim() !== ''));
+  if (all.length < 2) { hint.textContent = '⚠ 至少需要標題列 + 1 筆資料'; return; }
+  IMPORT.headers = all[0].map(h => String(h).trim());
+  IMPORT.rows    = all.slice(1);
+  IMPORT.map     = autoMap(currentFields(), IMPORT.headers);
+  hint.textContent = `✓ 偵測到 ${delim==='\t'?'Tab':'逗號'} 分隔・${IMPORT.headers.length} 欄・${IMPORT.rows.length} 筆`;
+  document.getElementById('imp-map-card').style.display = 'block';
+  document.getElementById('imp-result-card').style.display = 'none';
+  renderMapping();
+  document.getElementById('imp-map-card').scrollIntoView({behavior:'smooth'});
+}
+
+function renderMapping() {
+  const fields = currentFields();
+  const optHtml = sel => '<option value="">— 不匯入 —</option>' +
+    IMPORT.headers.map((h,i)=>`<option value="${i}" ${sel===i?'selected':''}>${escapeHtml(h)||('欄'+(i+1))}</option>`).join('');
+  document.getElementById('imp-map-grid').innerHTML = fields.map(f=>`
+    <div class="map-row">
+      <div class="map-label">${f.label}${f.req?'<span class="req">*</span>':''}${f.type==='date'?'<span class="ftype">日期</span>':f.type==='num'?'<span class="ftype">數字</span>':''}</div>
+      <select onchange="onMapChange('${f.key}', this.value)">${optHtml(IMPORT.map[f.key])}</select>
+    </div>`).join('');
+  renderImportOptions();
+  renderPreview();
+}
+
+function onMapChange(key, val) {
+  if (val === '') delete IMPORT.map[key]; else IMPORT.map[key] = parseInt(val);
+  renderPreview();
+}
+
+function renderImportOptions() {
+  const el = document.getElementById('imp-options');
+  if (IMPORT.target === 'products') {
+    el.innerHTML = `
+      <label><input type="checkbox" id="opt-dup-mode" checked> 產品編號已存在時 → 更新現有資料（取消勾選則略過）</label>`;
+  } else {
+    el.innerHTML = `
+      <label><input type="checkbox" id="opt-auto-total" checked> 「總損失」空白時自動 = 損失 + 運費</label>
+      <label><input type="checkbox" id="opt-skip-dup" checked> 略過重複（依「交易序號 + 日期」判斷，避免重複匯入）</label>`;
+  }
+}
+
+const escapeHtml = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function normDate(v) {
+  v = String(v||'').trim().replace(/^@/,''); if (!v) return '';
+  let m = v.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  m = v.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);          // d/m/yyyy（台灣少見，保留）
+  if (m) return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  const months={january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
+  m = v.toLowerCase().match(/([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})/);
+  if (m && months[m[1]]) return `${m[3]}-${String(months[m[1]]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+  const d = new Date(v); if (!isNaN(d)) return d.toISOString().split('T')[0];
+  return v;
+}
+function normNum(v) { const n = parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
+
+// 由目前對應建立記錄陣列：[{ok, rec}]
+function buildRecords() {
+  const fields = currentFields();
+  const get = (r,k) => IMPORT.map[k]!=null ? String(r[IMPORT.map[k]]??'').trim() : '';
+  const autoTotal = document.getElementById('opt-auto-total')?.checked;
+  return IMPORT.rows.map(r => {
+    if (IMPORT.target === 'products') {
+      const id=get(r,'id'), name=get(r,'name');
+      return { ok: !!(id&&name), rec: {
+        id, name, style:get(r,'style'), size:get(r,'size'),
+        len:get(r,'len'), h:get(r,'h'), w:get(r,'w'), weight:get(r,'weight'),
+        material:get(r,'material'), expire:get(r,'expire'), note:get(r,'note'),
+        hasVariants:false, variants:[], limit:get(r,'limit'), cost:get(r,'cost'), ts: Date.now()
+      }};
+    } else {
+      const date=normDate(get(r,'date')), platform=get(r,'platform');
+      const loss=normNum(get(r,'loss')), freight=normNum(get(r,'freight'));
+      let total=normNum(get(r,'total')); if (autoTotal && !total) total = loss + freight;
+      const products=[]; const pid=get(r,'pid'),pname=get(r,'pname'),pstyle=get(r,'pstyle'),psize=get(r,'psize'),pcost=get(r,'pcost');
+      if (pid||pname||pstyle||psize||pcost) products.push({pid,pname,pstyle,psize,pcost});
+      return { ok: !!(date&&platform), rec: {
+        date, platform, condition:get(r,'condition'), type:get(r,'type'), by:get(r,'by'),
+        shipDate:normDate(get(r,'shipDate')), order:get(r,'order'), resolution:get(r,'resolution'),
+        products, loss, freight, total, ts: Date.now()
+      }};
+    }
+  });
+}
+
+function renderPreview() {
+  const fields = currentFields();
+  const shown = fields.filter(f => IMPORT.map[f.key]!=null);
+  const built = buildRecords();
+  const okCount = built.filter(b=>b.ok).length;
+  const badCount = built.length - okCount;
+
+  document.getElementById('imp-stat-bar').innerHTML = `
+    <div class="import-stat"><b>${built.length}</b>可匯入總筆數</div>
+    <div class="import-stat"><b>${okCount}</b>必填完整</div>
+    ${badCount?`<div class="import-stat warn"><b>${badCount}</b>缺必填（將略過）</div>`:''}`;
+
+  const reqKeys = fields.filter(f=>f.req).map(f=>f.key);
+  const head = shown.map(f=>`<th>${f.label}</th>`).join('') || '<th>（尚未對應任何欄位）</th>';
+  const get = (r,k) => IMPORT.map[k]!=null ? String(r[IMPORT.map[k]]??'').trim() : '';
+  const body = IMPORT.rows.slice(0,8).map((r,i)=>{
+    const ok = built[i].ok;
+    const tds = shown.map(f=>{
+      let v = get(r,f.key);
+      if (f.type==='date') v = normDate(v);
+      if (f.type==='num' && v) v = String(normNum(v));
+      const missing = reqKeys.includes(f.key) && !v;
+      return `<td class="${v?'':'muted'}">${v?escapeHtml(v):(missing?'⚠ 缺':'—')}</td>`;
+    }).join('') || '<td class="muted">—</td>';
+    return `<tr class="${ok?'':'invalid'}">${tds}</tr>`;
+  }).join('');
+  document.getElementById('imp-preview').innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
+
+  const reqOk = reqKeys.every(k=>IMPORT.map[k]!=null);
+  const btn = document.getElementById('imp-run-btn');
+  btn.disabled = !reqOk || okCount===0;
+  btn.style.opacity = btn.disabled ? '.5' : '1';
+  document.getElementById('imp-final-hint').textContent = !reqOk
+    ? `⚠ 請先對應必填欄位：${fields.filter(f=>f.req&&IMPORT.map[f.key]==null).map(f=>f.label).join('、')}`
+    : `準備匯入 ${okCount} 筆`;
+}
+
+async function runImport() {
+  const built = buildRecords().filter(b=>b.ok);
+  if (!built.length) { toast('沒有可匯入的資料'); return; }
+  const btn = document.getElementById('imp-run-btn');
+  btn.disabled = true; setSyncStatus('saving','匯入中…');
+
+  let added=0, updated=0, skipped=0;
+  try {
+    if (IMPORT.target === 'products') {
+      const updateMode = document.getElementById('opt-dup-mode')?.checked;
+      const byId = {}; DB.forEach(p=>{ if(p.id) byId[p.id]=p; });
+      const ops = [];
+      for (const {rec} of built) {
+        const ex = byId[rec.id];
+        if (ex?._docId) {
+          if (!updateMode) { skipped++; continue; }
+          ops.push({ ref: doc(db,'products',ex._docId), rec }); updated++;
+        } else {
+          ops.push({ ref: doc(collection(db,'products')), rec }); added++;
+          byId[rec.id] = { id: rec.id, _docId: '__pending__' }; // 同批內去重
+        }
+      }
+      await commitBatches(ops);
+    } else {
+      const skipDup = document.getElementById('opt-skip-dup')?.checked;
+      const seen = new Set();
+      ANOMALIES.forEach(a=>{ if(a.order) seen.add(a.order+'__'+(a.date||'')); });
+      const ops = [];
+      for (const {rec} of built) {
+        const key = rec.order ? rec.order+'__'+rec.date : null;
+        if (skipDup && key && seen.has(key)) { skipped++; continue; }
+        if (key) seen.add(key);
+        ops.push({ ref: doc(collection(db,'anomalies')), rec }); added++;
+      }
+      await commitBatches(ops);
+    }
+    setSyncStatus('ok','匯入完成');
+    showImportResult(added, updated, skipped);
+    await loadAll();
+  } catch(e) {
+    console.error(e); setSyncStatus('error','匯入失敗');
+    toast('❌ 匯入失敗：' + (e.message||e));
+    btn.disabled = false;
+  }
+}
+
+// 分批寫入（Firestore 單批上限 500，保守用 400）
+async function commitBatches(ops) {
+  for (let i=0; i<ops.length; i+=400) {
+    const batch = writeBatch(db);
+    ops.slice(i, i+400).forEach(o => batch.set(o.ref, o.rec));
+    await batch.commit();
+  }
+}
+
+function showImportResult(added, updated, skipped) {
+  const tgt = IMPORT.target==='products' ? '商品' : '異常記錄';
+  document.getElementById('imp-map-card').style.display = 'none';
+  const card = document.getElementById('imp-result-card');
+  card.style.display = 'block';
+  document.getElementById('imp-result').innerHTML = `
+    <div class="section-label">✓ ${tgt}匯入完成</div>
+    <div class="result-line"><span class="result-num" style="color:var(--accent2)">${added}</span> 筆新增</div>
+    ${updated?`<div class="result-line"><span class="result-num" style="color:var(--info-text)">${updated}</span> 筆更新</div>`:''}
+    ${skipped?`<div class="result-line"><span class="result-num" style="color:var(--text3)">${skipped}</span> 筆略過（重複或缺必填）</div>`:''}`;
+  card.scrollIntoView({behavior:'smooth'});
+  toast(`✓ 已匯入 ${added+updated} 筆${tgt}`);
+}
+
+function resetImport() {
+  IMPORT = { target: IMPORT.target, headers:[], rows:[], map:{} };
+  document.getElementById('imp-raw').value = '';
+  document.getElementById('imp-file').value = '';
+  document.getElementById('imp-file-name').textContent = '';
+  document.getElementById('imp-parse-hint').textContent = '';
+  document.getElementById('imp-map-card').style.display = 'none';
+  document.getElementById('imp-result-card').style.display = 'none';
+}
+
 // ── Tab Switching ──
 function switchMain(t) {
-  document.querySelectorAll('.main-tab').forEach((el,i)=>el.classList.toggle('active',['products','anomaly','stats'][i]===t));
+  document.querySelectorAll('.main-tab').forEach((el,i)=>el.classList.toggle('active',['products','anomaly','stats','import'][i]===t));
   document.querySelectorAll('.main-panel').forEach(el=>el.classList.remove('active'));
   document.getElementById('main-'+t).classList.add('active');
   if (t==='stats') renderStats();
@@ -1022,6 +1445,8 @@ window.renderAnomalyList=renderAnomalyList; window.renderStats=renderStats;
 window.loginGoogle=loginGoogle; window.loginEmail=loginEmail; window.logout=logout;
 window._pedit=editProduct; window._pdel=deleteProduct;
 window._aedit=editAnomaly; window._adel=deleteAnomaly;
+window.setImportTarget=setImportTarget; window.onImportFile=onImportFile; window.parseImport=parseImport;
+window.onMapChange=onMapChange; window.runImport=runImport; window.resetImport=resetImport;
 
 // ── Set today's date & init product row ──
 document.getElementById('a-date').value = new Date().toISOString().split('T')[0];
