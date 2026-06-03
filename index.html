@@ -149,6 +149,8 @@ button:active { transform: scale(.98); }
 .anomaly-products { margin-bottom: 10px; }
 .ap-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--bg); border-radius: var(--radius); margin-bottom: 4px; font-size: 13px; flex-wrap: wrap; }
 .ap-id { font-family: var(--mono); font-size: 11px; color: var(--tag-text); background: var(--tag-bg); padding: 2px 7px; border-radius: var(--radius); }
+.ap-link { font-size: 11px; color: var(--info-text); background: var(--info-bg); padding: 2px 8px; border-radius: var(--radius); text-decoration: none; white-space: nowrap; }
+.ap-link:hover { text-decoration: underline; }
 .anomaly-loss { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 12px; background: var(--danger-bg); border-radius: var(--radius); }
 .loss-item { display: flex; flex-direction: column; }
 .loss-label { font-size: 10px; color: var(--danger-text); font-family: var(--mono); opacity: .8; }
@@ -608,6 +610,34 @@ function setSyncStatus(state, label) {
 }
 
 // ── Load All ──
+// ── 通用日期解析（看得懂 中文年月日 / 上午下午 / ISO / 斜線格式）──
+function parseAnyDate(v) {
+  if (!v) return 0;
+  if (v instanceof Date) return isNaN(v) ? 0 : v.getTime();
+  let s = String(v).trim().replace(/^@/,'');
+  let m = s.match(/(\d{4})\s*[年\/\-.]\s*(\d{1,2})\s*[月\/\-.]\s*(\d{1,2})/);
+  if (m) {
+    let hh = 0, mm = 0;
+    const t = s.match(/(上午|下午|am|pm)?\s*(\d{1,2}):(\d{2})/i);
+    if (t) {
+      hh = parseInt(t[2]); mm = parseInt(t[3]);
+      const ap = (t[1]||'').toLowerCase();
+      if ((ap==='下午'||ap==='pm') && hh < 12) hh += 12;
+      if ((ap==='上午'||ap==='am') && hh === 12) hh = 0;
+    }
+    return new Date(+m[1], +m[2]-1, +m[3], hh, mm).getTime();
+  }
+  const d = new Date(s);
+  return isNaN(d) ? 0 : d.getTime();
+}
+// 以「本地」時間轉成 YYYY-MM-DD（避免 toISOString 的時區位移）
+function toISO(t) {
+  const d = new Date(t);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+// 顯示用：能解析就格式化成 YYYY-MM-DD，否則原樣顯示
+function fmtDate(v) { const t = parseAnyDate(v); return t ? toISO(t) : (v ? String(v) : ''); }
+
 async function loadAll() {
   setSyncStatus('saving', '載入中…');
   try {
@@ -617,6 +647,8 @@ async function loadAll() {
     ]);
     DB        = pSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
     ANOMALIES = aSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    // 依記錄真實日期排序（新→舊），日期相同或無法解析時用建立時間 ts 當輔助
+    ANOMALIES.sort((a,b) => (parseAnyDate(b.date) - parseAnyDate(a.date)) || ((b.ts||0) - (a.ts||0)));
     setSyncStatus('ok', `已連線・${DB.length} 筆商品`);
     doSearch(document.getElementById('search-input').value);
     renderAnomalyList();
@@ -965,9 +997,9 @@ function anomalyCard(a) {
   return `<div class="anomaly-card">
     <div class="anomaly-card-header">
       <div class="anomaly-meta">
-        <span class="anomaly-id">${a.order || '無序號'}</span>
+        ${a.order ? `<span class="anomaly-id">${a.order}</span>` : `<span class="anomaly-id" style="background:var(--bg2);color:var(--text3)" title="此筆在 Notion 沒有交易序號">無序號</span>`}
         <span class="anomaly-platform" style="color:${color}">${a.platform}</span>
-        <span class="anomaly-date">${a.date}</span>
+        <span class="anomaly-date">${fmtDate(a.date)}</span>
         <span class="anomaly-by">by ${a.by || '—'}</span>
       </div>
       <div class="card-actions">
@@ -980,16 +1012,21 @@ function anomalyCard(a) {
         ${a.condition?`<span class="tag ${condTag}">${a.condition}</span>`:''}
         ${a.type?`<span class="tag error">${a.type}</span>`:''}
         ${a.resolution?`<span class="tag ${resTag}">${a.resolution}</span>`:''}
-        ${a.shipDate?`<span class="tag">出貨：${a.shipDate}</span>`:''}
+        ${a.shipDate?`<span class="tag">出貨：${fmtDate(a.shipDate)}</span>`:''}
       </div>
       ${(a.products||[]).length?`<div class="anomaly-products">
-        ${a.products.map(p=>`<div class="ap-row">
-          <span class="ap-id">${p.pid||'—'}</span>
-          <span>${p.pname||'—'}</span>
+        ${a.products.map(p=>{
+          const isUrl = /^https?:\/\//i.test(p.pid||'');
+          const idCell = isUrl
+            ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener">🔗 Notion 來源</a>`
+            : `<span class="ap-id">${p.pid||'—'}</span>`;
+          return `<div class="ap-row">
+          ${idCell}
+          ${p.pname?`<span>${p.pname}</span>`:''}
           ${p.pstyle?`<span style="color:var(--text2);font-size:12px">${p.pstyle}</span>`:''}
           ${p.psize?`<span style="color:var(--text2);font-size:12px">${p.psize}</span>`:''}
           ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${p.pcost}</span>`:''}
-        </div>`).join('')}
+        </div>`;}).join('')}
       </div>`:''}
       <div class="anomaly-loss">
         ${a.loss?`<div class="loss-item"><span class="loss-label">損失金額</span><span class="loss-value">$${a.loss.toLocaleString()}</span></div>`:''}
@@ -1024,8 +1061,9 @@ function renderStats() {
   if (platform) list = list.filter(a => a.platform === platform);
   if (period !== 'all') {
     list = list.filter(a => {
-      if (!a.date) return false;
-      const d = new Date(a.date);
+      const t = parseAnyDate(a.date);
+      if (!t) return false;
+      const d = new Date(t);
       if (period === 'month')  return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
       if (period === '3month') return (now - d) <= 90*24*60*60*1000;
       if (period === 'year')   return d.getFullYear()===now.getFullYear();
@@ -1250,15 +1288,8 @@ const escapeHtml = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;',
 
 function normDate(v) {
   v = String(v||'').trim().replace(/^@/,''); if (!v) return '';
-  let m = v.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
-  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
-  m = v.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);          // d/m/yyyy（台灣少見，保留）
-  if (m) return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
-  const months={january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
-  m = v.toLowerCase().match(/([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})/);
-  if (m && months[m[1]]) return `${m[3]}-${String(months[m[1]]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
-  const d = new Date(v); if (!isNaN(d)) return d.toISOString().split('T')[0];
-  return v;
+  const t = parseAnyDate(v);
+  return t ? toISO(t) : v;
 }
 function normNum(v) { const n = parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
 
