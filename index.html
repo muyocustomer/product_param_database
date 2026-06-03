@@ -1437,16 +1437,18 @@ async function runImport() {
   try {
     if (IMPORT.target === 'products') {
       const updateMode = document.getElementById('opt-dup-mode')?.checked;
-      const byId = {}; DB.forEach(p=>{ if(p.id) byId[p.id]=p; });
+      const existingById = {}; DB.forEach(p=>{ if(p.id) existingById[p.id]=p; });
+      // 先把同一批內重複的產品編號合併（後出現的覆蓋先前的），確保每個編號只寫一次
+      const uniq = {};
+      built.forEach(({rec}) => { uniq[rec.id] = rec; });
       const ops = [];
-      for (const {rec} of built) {
-        const ex = byId[rec.id];
-        if (ex?._docId) {
+      for (const rec of Object.values(uniq)) {
+        const ex = existingById[rec.id];
+        if (ex && ex._docId) {
           if (!updateMode) { skipped++; continue; }
           ops.push({ ref: doc(db,'products',ex._docId), rec }); updated++;
         } else {
           ops.push({ ref: doc(collection(db,'products')), rec }); added++;
-          byId[rec.id] = { id: rec.id, _docId: '__pending__' }; // 同批內去重
         }
       }
       await commitBatches(ops);
