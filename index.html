@@ -157,6 +157,23 @@ button:active { transform: scale(.98); }
 .loss-value { font-size: 14px; font-weight: 600; color: var(--danger-text); }
 .loss-total { margin-left: auto; }
 
+/* ── Compact Anomaly List ── */
+.alist { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
+.arow { display: grid; grid-template-columns: 92px 108px minmax(0,1fr) auto 92px 22px; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s; }
+.arow:hover { background: var(--bg); }
+.arow.open { background: var(--bg2); }
+.acol-date { font-family: var(--mono); font-size: 11px; color: var(--text2); white-space: nowrap; }
+.acol-platform { font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.acol-platform .pdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.acol-order { font-family: var(--mono); font-size: 11px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acol-type { display: flex; justify-content: flex-end; }
+.acol-loss { font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--danger-text); text-align: right; white-space: nowrap; }
+.achev { color: var(--text3); text-align: center; transition: transform .15s; font-size: 12px; }
+.arow.open .achev { transform: rotate(90deg); }
+.adetail { display: none; padding: 14px 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.adetail.open { display: block; }
+.alist > .arow:last-of-type, .alist > .adetail:last-child { border-bottom: none; }
+
 /* ── Product rows in anomaly form ── */
 .product-rows { display: flex; flex-direction: column; gap: 8px; }
 .product-row { display: grid; grid-template-columns: 110px 1fr 1fr 120px 120px auto; gap: 8px; align-items: end; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
@@ -178,6 +195,16 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
 .summary-value.red { color: var(--danger-text); }
 .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
 .filter-row select, .filter-row input { flex: 1; min-width: 120px; max-width: 200px; }
+
+/* ── Stats Breakdown Bars ── */
+.bd-row { margin-bottom: 13px; }
+.bd-row:last-child { margin-bottom: 0; }
+.bd-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
+.bd-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.bd-meta { font-size: 12px; color: var(--text2); font-family: var(--mono); white-space: nowrap; }
+.bd-meta b { color: var(--danger-text); font-weight: 600; }
+.bd-bar { height: 6px; background: var(--bg2); border-radius: 99px; overflow: hidden; }
+.bd-fill { height: 100%; background: var(--danger-text); border-radius: 99px; opacity: .82; }
 
 /* ── Import Wizard ── */
 .import-target { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
@@ -223,6 +250,11 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
   .form-grid-3 { grid-template-columns: 1fr 1fr; }
   .main-tabs { grid-template-columns: repeat(2, 1fr); }
   .map-row { grid-template-columns: 1fr; gap: 4px; }
+  .arow { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px; }
+  .acol-order { flex: 1 1 100%; order: 5; }
+  .acol-type { justify-content: flex-start; order: 4; }
+  .acol-loss { margin-left: auto; order: 3; }
+  .achev { order: 6; }
 }
 </style>
 </head>
@@ -448,18 +480,24 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
 
     <!-- ══ 損失統計 ══ -->
     <div id="main-stats" class="main-panel">
-      <div class="filter-row" style="margin-bottom:1.5rem">
+      <div class="filter-row" style="margin-bottom:1rem">
         <select id="stats-period" onchange="renderStats()">
           <option value="all">全部時間</option>
           <option value="month">本月</option>
           <option value="3month">近3個月</option>
           <option value="year">本年度</option>
+          <option value="custom">自訂區間…</option>
         </select>
         <select id="stats-platform" onchange="renderStats()">
           <option value="">所有平台</option>
           <option>蝦皮A</option><option>蝦皮B</option><option>蝦皮C</option><option>蝦皮D</option>
           <option>MOMO大網</option><option>MO店+</option><option>PC24</option><option>東森</option><option>FRIDAY</option>
         </select>
+      </div>
+      <div class="filter-row" id="stats-range" style="display:none;align-items:center;margin-bottom:1.5rem">
+        <input type="date" id="stats-from" onchange="renderStats()">
+        <span style="color:var(--text3);flex:0">～</span>
+        <input type="date" id="stats-to" onchange="renderStats()">
       </div>
       <div class="summary-grid" id="stats-summary"></div>
       <div id="stats-breakdown"></div>
@@ -988,78 +1026,134 @@ const PLATFORM_COLORS = {
   'MOMO大網':'#b8144b','MO店+':'#b8144b','PC24':'#2563eb','東森':'#16a34a','FRIDAY':'#7c3aed'
 };
 
-function anomalyCard(a) {
+function anomalyRow(a) {
   const color = PLATFORM_COLORS[a.platform] || 'var(--text2)';
+  const sid = (a._docId||'');
+  const typeTag = a.type ? `<span class="tag error" style="padding:1px 8px;font-size:11px">${a.type}</span>` : '';
+  const order = a.order
+    ? `<span title="${escapeHtml(a.order)}">${escapeHtml(a.order)}</span>`
+    : `<span style="color:var(--text3)">無序號</span>`;
+  return `<div class="arow" data-id="${sid}" onclick="window._atoggle('${sid}')">
+    <span class="acol-date">${fmtDate(a.date)}</span>
+    <span class="acol-platform" style="color:${color}"><span class="pdot" style="background:${color}"></span>${a.platform||'—'}</span>
+    <span class="acol-order">${order}</span>
+    <span class="acol-type">${typeTag}</span>
+    <span class="acol-loss">$${(a.total||0).toLocaleString()}</span>
+    <span class="achev">▸</span>
+  </div>
+  <div class="adetail" id="ad-${sid}"></div>`;
+}
+
+function anomalyDetail(a) {
   const sid = (a._docId||'').replace(/'/g,"\\'");
   const condTag = a.condition === '商品錯誤' ? 'error' : a.condition === '商品瑕疵' ? 'warn' : 'info';
   const resTag  = a.resolution === '客可接受商品' ? 'ok' : 'warn';
-
-  return `<div class="anomaly-card">
-    <div class="anomaly-card-header">
-      <div class="anomaly-meta">
-        ${a.order ? `<span class="anomaly-id">${a.order}</span>` : `<span class="anomaly-id" style="background:var(--bg2);color:var(--text3)" title="此筆在 Notion 沒有交易序號">無序號</span>`}
-        <span class="anomaly-platform" style="color:${color}">${a.platform}</span>
-        <span class="anomaly-date">${fmtDate(a.date)}</span>
-        <span class="anomaly-by">by ${a.by || '—'}</span>
-      </div>
-      <div class="card-actions">
-        <button class="btn-sm" onclick="window._aedit('${sid}')">編輯</button>
-        <button class="btn-sm btn-danger" onclick="window._adel('${sid}')">刪除</button>
-      </div>
+  const metaBits = [
+    a.by && `登記人：${escapeHtml(a.by)}`,
+    a.shipDate && `出貨：${fmtDate(a.shipDate)}`,
+  ].filter(Boolean).join('　·　');
+  return `
+    <div class="anomaly-tags" style="margin-bottom:10px">
+      ${a.condition?`<span class="tag ${condTag}">${a.condition}</span>`:''}
+      ${a.type?`<span class="tag error">${a.type}</span>`:''}
+      ${a.resolution?`<span class="tag ${resTag}">${a.resolution}</span>`:''}
     </div>
-    <div class="anomaly-body">
-      <div class="anomaly-tags">
-        ${a.condition?`<span class="tag ${condTag}">${a.condition}</span>`:''}
-        ${a.type?`<span class="tag error">${a.type}</span>`:''}
-        ${a.resolution?`<span class="tag ${resTag}">${a.resolution}</span>`:''}
-        ${a.shipDate?`<span class="tag">出貨：${fmtDate(a.shipDate)}</span>`:''}
-      </div>
-      ${(a.products||[]).length?`<div class="anomaly-products">
-        ${a.products.map(p=>{
-          const isUrl = /^https?:\/\//i.test(p.pid||'');
-          const idCell = isUrl
-            ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener">🔗 Notion 來源</a>`
-            : `<span class="ap-id">${p.pid||'—'}</span>`;
-          return `<div class="ap-row">
-          ${idCell}
-          ${p.pname?`<span>${p.pname}</span>`:''}
-          ${p.pstyle?`<span style="color:var(--text2);font-size:12px">${p.pstyle}</span>`:''}
-          ${p.psize?`<span style="color:var(--text2);font-size:12px">${p.psize}</span>`:''}
-          ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${p.pcost}</span>`:''}
+    ${metaBits?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px">${metaBits}</div>`:''}
+    ${(a.products||[]).length?`<div class="anomaly-products">
+      ${a.products.map(p=>{
+        const isUrl = /^https?:\/\//i.test(p.pid||'');
+        const idCell = isUrl
+          ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener">🔗 Notion 來源</a>`
+          : `<span class="ap-id">${escapeHtml(p.pid)||'—'}</span>`;
+        return `<div class="ap-row">${idCell}
+          ${p.pname?`<span>${escapeHtml(p.pname)}</span>`:''}
+          ${p.pstyle?`<span style="color:var(--text2);font-size:12px">${escapeHtml(p.pstyle)}</span>`:''}
+          ${p.psize?`<span style="color:var(--text2);font-size:12px">${escapeHtml(p.psize)}</span>`:''}
+          ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${escapeHtml(p.pcost)}</span>`:''}
         </div>`;}).join('')}
-      </div>`:''}
-      <div class="anomaly-loss">
-        ${a.loss?`<div class="loss-item"><span class="loss-label">損失金額</span><span class="loss-value">$${a.loss.toLocaleString()}</span></div>`:''}
-        ${a.freight?`<div class="loss-item"><span class="loss-label">運費成本</span><span class="loss-value">$${a.freight.toLocaleString()}</span></div>`:''}
-        <div class="loss-item loss-total"><span class="loss-label">總損失</span><span class="loss-value">$${(a.total||0).toLocaleString()}</span></div>
-      </div>
+    </div>`:''}
+    <div class="anomaly-loss" style="margin-top:10px">
+      ${a.loss?`<div class="loss-item"><span class="loss-label">損失金額</span><span class="loss-value">$${a.loss.toLocaleString()}</span></div>`:''}
+      ${a.freight?`<div class="loss-item"><span class="loss-label">運費成本</span><span class="loss-value">$${a.freight.toLocaleString()}</span></div>`:''}
+      <div class="loss-item loss-total"><span class="loss-label">總損失</span><span class="loss-value">$${(a.total||0).toLocaleString()}</span></div>
     </div>
-  </div>`;
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-sm" onclick="window._aedit('${sid}')">編輯</button>
+      <button class="btn-sm btn-danger" onclick="window._adel('${sid}')">刪除</button>
+    </div>`;
 }
 
-function renderAnomalyList() {
+let ANOM_SHOWN = 60, ANOM_KEY = '\u0000';
+function getAnomalyFiltered() {
   const platform = document.getElementById('filter-platform').value;
   const status   = document.getElementById('filter-status').value;
   const keyword  = (document.getElementById('filter-keyword').value||'').toLowerCase();
+  const key = platform+'|'+status+'|'+keyword;
+  if (key !== ANOM_KEY) { ANOM_KEY = key; ANOM_SHOWN = 60; }   // 篩選條件變更時重設分頁
   let list = ANOMALIES;
   if (platform) list = list.filter(a => a.platform === platform);
   if (status)   list = list.filter(a => a.condition === status);
-  if (keyword)  list = list.filter(a => [a.order, a.by, ...(a.products||[]).map(p=>p.pid+' '+p.pname)].join(' ').toLowerCase().includes(keyword));
-  document.getElementById('anomaly-count').textContent = `共 ${list.length} 筆記錄`;
-  if (!list.length) { document.getElementById('anomaly-list').innerHTML = '<div class="empty">目前沒有異常記錄</div>'; return; }
-  document.getElementById('anomaly-list').innerHTML = list.map(a=>anomalyCard(a)).join('');
+  if (keyword)  list = list.filter(a => [a.order, a.by, ...(a.products||[]).map(p=>(p.pid||'')+' '+(p.pname||''))].join(' ').toLowerCase().includes(keyword));
+  return list;
 }
 
+function renderAnomalyList() {
+  const list = getAnomalyFiltered();
+  const cnt  = document.getElementById('anomaly-count');
+  const wrap = document.getElementById('anomaly-list');
+  if (!list.length) { cnt.textContent = '共 0 筆記錄'; wrap.innerHTML = '<div class="empty">目前沒有異常記錄</div>'; return; }
+  const shown = Math.min(ANOM_SHOWN, list.length);
+  cnt.textContent = shown < list.length ? `共 ${list.length} 筆記錄・顯示前 ${shown} 筆` : `共 ${list.length} 筆記錄`;
+  wrap.innerHTML = `<div class="alist">${list.slice(0, shown).map(anomalyRow).join('')}</div>` +
+    (shown < list.length ? `<button class="btn-full" style="margin-top:12px" onclick="window._amore()">載入更多（剩 ${list.length-shown} 筆）</button>` : '');
+}
+
+function toggleAnomaly(docId) {
+  const det = document.getElementById('ad-'+docId);
+  const row = document.querySelector(`.arow[data-id="${docId}"]`);
+  if (!det) return;
+  if (!det.innerHTML) { const a = ANOMALIES.find(x=>x._docId===docId); if (a) det.innerHTML = anomalyDetail(a); }
+  const open = det.classList.toggle('open');
+  if (row) row.classList.toggle('open', open);
+}
+
+function loadMoreAnomaly() { ANOM_SHOWN += 60; renderAnomalyList(); }
+
 // ══ 損失統計 ══
+
+// 分組分析的比例條（依總損失大小排序與縮放）
+function buildBreakdown(map) {
+  const entries = Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  if (!entries.length) return '';
+  const max = Math.max(...entries.map(([,v])=>v.total), 1);
+  return entries.map(([k,v])=>{
+    const pct = Math.max(2, Math.round(v.total/max*100));
+    return `<div class="bd-row">
+      <div class="bd-head">
+        <span class="bd-name">${escapeHtml(k)}</span>
+        <span class="bd-meta">${v.count} 筆・<b>$${v.total.toLocaleString()}</b></span>
+      </div>
+      <div class="bd-bar"><div class="bd-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
 
 function renderStats() {
   const period   = document.getElementById('stats-period').value;
   const platform = document.getElementById('stats-platform').value;
   const now = new Date();
+  document.getElementById('stats-range').style.display = period==='custom' ? 'flex' : 'none';
 
   let list = ANOMALIES;
   if (platform) list = list.filter(a => a.platform === platform);
-  if (period !== 'all') {
+
+  if (period === 'custom') {
+    const fromV = document.getElementById('stats-from').value;
+    const toV   = document.getElementById('stats-to').value;
+    const fromT = fromV ? parseAnyDate(fromV) : -Infinity;
+    const toT   = toV   ? parseAnyDate(toV) + 86399999 : Infinity;   // 含結束當日整天
+    list = list.filter(a => { const t = parseAnyDate(a.date); return t && t>=fromT && t<=toT; });
+  } else if (period !== 'all') {
     list = list.filter(a => {
       const t = parseAnyDate(a.date);
       if (!t) return false;
@@ -1082,46 +1176,20 @@ function renderStats() {
     <div class="summary-card"><div class="summary-label">總損失</div><div class="summary-value red">$${totalAll.toLocaleString()}</div></div>
   `;
 
-  // 平台分析
-  const byPlatform = {};
-  list.forEach(a => {
-    if (!byPlatform[a.platform]) byPlatform[a.platform] = {count:0, total:0};
-    byPlatform[a.platform].count++;
-    byPlatform[a.platform].total += a.total||0;
-  });
+  // 依欄位分組統計（筆數 + 總損失）
+  const group = keyFn => {
+    const m = {};
+    list.forEach(a => { const k = keyFn(a) || '（未填）'; if (!m[k]) m[k] = {count:0, total:0}; m[k].count++; m[k].total += a.total||0; });
+    return m;
+  };
+  const card = (title, map) => {
+    const inner = buildBreakdown(map);
+    return inner ? `<div class="form-card" style="margin-bottom:1rem"><div class="form-section"><div class="section-label">${title}</div>${inner}</div></div>` : '';
+  };
 
-  const byType = {};
-  list.forEach(a => {
-    if (!byType[a.type]) byType[a.type] = 0;
-    byType[a.type]++;
-  });
-
-  let html = '';
-  if (Object.keys(byPlatform).length) {
-    html += `<div class="form-card" style="margin-bottom:1rem"><div class="form-section"><div class="section-label">各平台損失</div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <tr style="color:var(--text3);font-size:11px;font-family:var(--mono)"><td style="padding:6px 4px">平台</td><td style="padding:6px 4px;text-align:right">筆數</td><td style="padding:6px 4px;text-align:right">總損失</td></tr>
-        ${Object.entries(byPlatform).sort((a,b)=>b[1].total-a[1].total).map(([p,v])=>`
-        <tr style="border-top:1px solid var(--border)">
-          <td style="padding:8px 4px;font-weight:500">${p}</td>
-          <td style="padding:8px 4px;text-align:right;color:var(--text2)">${v.count}</td>
-          <td style="padding:8px 4px;text-align:right;color:var(--danger-text);font-weight:600">$${v.total.toLocaleString()}</td>
-        </tr>`).join('')}
-      </table>
-    </div></div>`;
-  }
-
-  if (Object.keys(byType).length) {
-    html += `<div class="form-card"><div class="form-section"><div class="section-label">問題類型分佈</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:18px;font-weight:700;color:var(--danger-text)">${c}</span>
-          <span style="font-size:11px;color:var(--text2)">${t}</span>
-        </div>`).join('')}
-      </div>
-    </div></div>`;
-  }
+  let html = card('各商品狀態（筆數・成本）', group(a=>a.condition))
+           + card('各問題類型（筆數・成本）', group(a=>a.type))
+           + card('各平台損失（筆數・成本）', group(a=>a.platform));
 
   if (!html) html = '<div class="empty">此期間沒有異常記錄</div>';
   document.getElementById('stats-breakdown').innerHTML = html;
@@ -1476,6 +1544,7 @@ window.renderAnomalyList=renderAnomalyList; window.renderStats=renderStats;
 window.loginGoogle=loginGoogle; window.loginEmail=loginEmail; window.logout=logout;
 window._pedit=editProduct; window._pdel=deleteProduct;
 window._aedit=editAnomaly; window._adel=deleteAnomaly;
+window._atoggle=toggleAnomaly; window._amore=loadMoreAnomaly;
 window.setImportTarget=setImportTarget; window.onImportFile=onImportFile; window.parseImport=parseImport;
 window.onMapChange=onMapChange; window.runImport=runImport; window.resetImport=resetImport;
 
