@@ -157,22 +157,22 @@ button:active { transform: scale(.98); }
 .loss-value { font-size: 14px; font-weight: 600; color: var(--danger-text); }
 .loss-total { margin-left: auto; }
 
-/* ── Compact Anomaly List ── */
-.alist { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
-.arow { display: grid; grid-template-columns: 92px 108px minmax(0,1fr) auto 92px 22px; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s; }
-.arow:hover { background: var(--bg); }
-.arow.open { background: var(--bg2); }
-.acol-date { font-family: var(--mono); font-size: 11px; color: var(--text2); white-space: nowrap; }
-.acol-platform { font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.acol-platform .pdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.acol-order { font-family: var(--mono); font-size: 11px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.acol-type { display: flex; justify-content: flex-end; }
-.acol-loss { font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--danger-text); text-align: right; white-space: nowrap; }
-.achev { color: var(--text3); text-align: center; transition: transform .15s; font-size: 12px; }
-.arow.open .achev { transform: rotate(90deg); }
-.adetail { display: none; padding: 14px 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
-.adetail.open { display: block; }
-.alist > .arow:last-of-type, .alist > .adetail:last-child { border-bottom: none; }
+/* ── Notion-style Anomaly Table ── */
+.atable-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+.atable { border-collapse: collapse; width: 100%; font-size: 13px; white-space: nowrap; }
+.atable th { background: var(--bg2); color: var(--text2); font-size: 11px; font-weight: 500; font-family: var(--mono); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+.atable th.num { text-align: right; }
+.atable td { padding: 7px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+.atable tbody tr:hover { background: var(--bg); }
+.atable tbody tr:last-child td { border-bottom: none; }
+.atable .num { text-align: right; font-family: var(--mono); color: var(--text2); }
+.atable .num.loss { color: var(--danger-text); font-weight: 600; }
+.atable .c-date { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+.atable .c-order { font-family: var(--mono); font-size: 12px; }
+.atable .acol-pid { font-family: var(--mono); font-size: 12px; color: var(--tag-text); }
+.atable .acts { display: flex; gap: 4px; }
+.atable .acts button { padding: 3px 9px; font-size: 11px; }
+.ttag { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 4px; line-height: 1.6; }
 
 /* ── Product rows in anomaly form ── */
 .product-rows { display: flex; flex-direction: column; gap: 8px; }
@@ -250,11 +250,6 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
   .form-grid-3 { grid-template-columns: 1fr 1fr; }
   .main-tabs { grid-template-columns: repeat(2, 1fr); }
   .map-row { grid-template-columns: 1fr; gap: 4px; }
-  .arow { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px; }
-  .acol-order { flex: 1 1 100%; order: 5; }
-  .acol-type { justify-content: flex-start; order: 4; }
-  .acol-loss { margin-left: auto; order: 3; }
-  .achev { order: 6; }
 }
 </style>
 </head>
@@ -758,18 +753,44 @@ async function saveProduct() {
     ts: Date.now()
   };
   setSyncStatus('saving', '儲存中…');
+  let wrote = false;
   try {
     const existing = DB.find(x => x.id === id);
-    if (existing?._docId) { await setDoc(doc(db,'products',existing._docId), p); toast('✓ 已更新：' + name); }
-    else { await addDoc(collection(db,'products'), p); toast('✓ 已新增：' + name); }
-    await loadAll(); clearProductForm();
-  } catch(e) { setSyncStatus('error','儲存失敗'); toast('❌ 儲存失敗'); }
+    if (existing?._docId) {
+      await setDoc(doc(db,'products',existing._docId), p);
+      Object.assign(existing, p);              // 更新本地，不整包重讀
+      wrote = true; toast('✓ 已更新：' + name);
+    } else {
+      const ref = await addDoc(collection(db,'products'), p);
+      DB.unshift({ _docId: ref.id, ...p });     // 加進本地清單最前
+      wrote = true; toast('✓ 已新增：' + name);
+    }
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error','儲存失敗');
+    toast('❌ 儲存失敗：' + (e.code || e.message || '未知錯誤'));
+    return;
+  }
+  if (wrote) {
+    setSyncStatus('ok', `已連線・${DB.length} 筆商品`);
+    clearProductForm();
+    doSearch(document.getElementById('search-input').value);
+    if (document.getElementById('panel-all').classList.contains('active')) renderAll();
+  }
 }
 
 async function deleteProduct(docId, name) {
   if (!confirm(`確定要刪除「${name}」嗎？`)) return;
-  await deleteDoc(doc(db,'products',docId));
-  toast('已刪除：' + name); await loadAll(); renderAll();
+  try {
+    await deleteDoc(doc(db,'products',docId));
+    DB = DB.filter(x => x._docId !== docId);     // 從本地移除，不整包重讀
+    toast('已刪除：' + name);
+    setSyncStatus('ok', `已連線・${DB.length} 筆商品`);
+    doSearch(document.getElementById('search-input').value);
+    renderAll();
+  } catch(e) {
+    console.error(e); toast('❌ 刪除失敗：' + (e.code || e.message || '未知錯誤'));
+  }
 }
 
 function editProduct(docId) {
@@ -972,18 +993,39 @@ async function saveAnomaly() {
   };
 
   setSyncStatus('saving','儲存中…');
+  let wrote = false;
   try {
     const editId = document.getElementById('a-edit-hint').dataset.docid;
-    if (editId) { await setDoc(doc(db,'anomalies',editId), a); toast('✓ 已更新記錄'); }
-    else { await addDoc(collection(db,'anomalies'), a); toast('✓ 已新增記錄'); }
-    await loadAll(); clearAnomalyForm(); switchAnomalyTab('list');
-  } catch(e) { setSyncStatus('error','儲存失敗'); toast('❌ 儲存失敗'); console.error(e); }
+    if (editId) {
+      await setDoc(doc(db,'anomalies',editId), a);
+      const ex = ANOMALIES.find(x => x._docId === editId); if (ex) Object.assign(ex, a);
+      wrote = true; toast('✓ 已更新記錄');
+    } else {
+      const ref = await addDoc(collection(db,'anomalies'), a);
+      ANOMALIES.push({ _docId: ref.id, ...a });
+      wrote = true; toast('✓ 已新增記錄');
+    }
+  } catch(e) {
+    console.error(e); setSyncStatus('error','儲存失敗');
+    toast('❌ 儲存失敗：' + (e.code || e.message || '未知錯誤'));
+    return;
+  }
+  if (wrote) {
+    ANOMALIES.sort((x,y) => (parseAnyDate(y.date)-parseAnyDate(x.date)) || ((y.ts||0)-(x.ts||0)));
+    setSyncStatus('ok','已連線');
+    clearAnomalyForm(); switchAnomalyTab('list'); renderStats();
+  }
 }
 
 async function deleteAnomaly(docId) {
   if (!confirm('確定要刪除這筆異常記錄嗎？')) return;
-  await deleteDoc(doc(db,'anomalies',docId));
-  toast('已刪除'); await loadAll();
+  try {
+    await deleteDoc(doc(db,'anomalies',docId));
+    ANOMALIES = ANOMALIES.filter(x => x._docId !== docId);   // 從本地移除，不整包重讀
+    toast('已刪除'); renderAnomalyList(); renderStats();
+  } catch(e) {
+    console.error(e); toast('❌ 刪除失敗：' + (e.code || e.message || '未知錯誤'));
+  }
 }
 
 function editAnomaly(docId) {
@@ -1026,61 +1068,36 @@ const PLATFORM_COLORS = {
   'MOMO大網':'#b8144b','MO店+':'#b8144b','PC24':'#2563eb','東森':'#16a34a','FRIDAY':'#7c3aed'
 };
 
-function anomalyRow(a) {
-  const color = PLATFORM_COLORS[a.platform] || 'var(--text2)';
-  const sid = (a._docId||'');
-  const typeTag = a.type ? `<span class="tag error" style="padding:1px 8px;font-size:11px">${a.type}</span>` : '';
-  const order = a.order
-    ? `<span title="${escapeHtml(a.order)}">${escapeHtml(a.order)}</span>`
-    : `<span style="color:var(--text3)">無序號</span>`;
-  return `<div class="arow" data-id="${sid}" onclick="window._atoggle('${sid}')">
-    <span class="acol-date">${fmtDate(a.date)}</span>
-    <span class="acol-platform" style="color:${color}"><span class="pdot" style="background:${color}"></span>${a.platform||'—'}</span>
-    <span class="acol-order">${order}</span>
-    <span class="acol-type">${typeTag}</span>
-    <span class="acol-loss">$${(a.total||0).toLocaleString()}</span>
-    <span class="achev">▸</span>
-  </div>
-  <div class="adetail" id="ad-${sid}"></div>`;
-}
+// Notion 風格的彩色標籤（同一文字 → 固定顏色）
+const TAG_PALETTE = [
+  ['#e8f0e6','#2d5a27'], ['#fdf3dc','#7a4f00'], ['#fceaea','#8c1f1f'], ['#e6f1fb','#0c447c'],
+  ['#f0e6f5','#5a2d6b'], ['#e0f0ec','#0f5e4a'], ['#fbe9f0','#8c1f4f'], ['#efe9e1','#6b4a2f'],
+];
+function tagColor(s){ let h=0; s=String(s||''); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return TAG_PALETTE[h%TAG_PALETTE.length]; }
+function pill(text){ if(!text) return ''; const [bg,fg]=tagColor(text); return `<span class="ttag" style="background:${bg};color:${fg}">${escapeHtml(text)}</span>`; }
 
-function anomalyDetail(a) {
-  const sid = (a._docId||'').replace(/'/g,"\\'");
-  const condTag = a.condition === '商品錯誤' ? 'error' : a.condition === '商品瑕疵' ? 'warn' : 'info';
-  const resTag  = a.resolution === '客可接受商品' ? 'ok' : 'warn';
-  const metaBits = [
-    a.by && `登記人：${escapeHtml(a.by)}`,
-    a.shipDate && `出貨：${fmtDate(a.shipDate)}`,
-  ].filter(Boolean).join('　·　');
-  return `
-    <div class="anomaly-tags" style="margin-bottom:10px">
-      ${a.condition?`<span class="tag ${condTag}">${a.condition}</span>`:''}
-      ${a.type?`<span class="tag error">${a.type}</span>`:''}
-      ${a.resolution?`<span class="tag ${resTag}">${a.resolution}</span>`:''}
-    </div>
-    ${metaBits?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px">${metaBits}</div>`:''}
-    ${(a.products||[]).length?`<div class="anomaly-products">
-      ${a.products.map(p=>{
-        const isUrl = /^https?:\/\//i.test(p.pid||'');
-        const idCell = isUrl
-          ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener">🔗 Notion 來源</a>`
-          : `<span class="ap-id">${escapeHtml(p.pid)||'—'}</span>`;
-        return `<div class="ap-row">${idCell}
-          ${p.pname?`<span>${escapeHtml(p.pname)}</span>`:''}
-          ${p.pstyle?`<span style="color:var(--text2);font-size:12px">${escapeHtml(p.pstyle)}</span>`:''}
-          ${p.psize?`<span style="color:var(--text2);font-size:12px">${escapeHtml(p.psize)}</span>`:''}
-          ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${escapeHtml(p.pcost)}</span>`:''}
-        </div>`;}).join('')}
-    </div>`:''}
-    <div class="anomaly-loss" style="margin-top:10px">
-      ${a.loss?`<div class="loss-item"><span class="loss-label">損失金額</span><span class="loss-value">$${a.loss.toLocaleString()}</span></div>`:''}
-      ${a.freight?`<div class="loss-item"><span class="loss-label">運費成本</span><span class="loss-value">$${a.freight.toLocaleString()}</span></div>`:''}
-      <div class="loss-item loss-total"><span class="loss-label">總損失</span><span class="loss-value">$${(a.total||0).toLocaleString()}</span></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn-sm" onclick="window._aedit('${sid}')">編輯</button>
-      <button class="btn-sm btn-danger" onclick="window._adel('${sid}')">刪除</button>
-    </div>`;
+function anomalyTableRow(a) {
+  const sid = (a._docId||'');
+  const pidCell = (a.products||[]).map(p =>
+    /^https?:\/\//i.test(p.pid||'')
+      ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener" title="Notion 連結（尚未對應商品編號）">🔗</a>`
+      : escapeHtml(p.pid||'')
+  ).filter(Boolean).join('　');
+  return `<tr>
+    <td><div class="acts"><button class="btn-sm" onclick="window._aedit('${sid}')">編輯</button><button class="btn-sm btn-danger" onclick="window._adel('${sid}')">刪除</button></div></td>
+    <td class="c-date">${fmtDate(a.date)}</td>
+    <td>${escapeHtml(a.by||'')}</td>
+    <td class="c-date">${fmtDate(a.shipDate)}</td>
+    <td class="c-order">${a.order ? escapeHtml(a.order) : '<span style="color:var(--text3)">—</span>'}</td>
+    <td>${pill(a.platform)}</td>
+    <td>${pill(a.condition)}</td>
+    <td>${pill(a.resolution)}</td>
+    <td>${pill(a.type)}</td>
+    <td class="num">${a.loss ? '$'+a.loss.toLocaleString() : ''}</td>
+    <td class="num">${a.freight ? '$'+a.freight.toLocaleString() : ''}</td>
+    <td class="num loss">$${(a.total||0).toLocaleString()}</td>
+    <td class="acol-pid">${pidCell}</td>
+  </tr>`;
 }
 
 let ANOM_SHOWN = 60, ANOM_KEY = '\u0000';
@@ -1104,17 +1121,13 @@ function renderAnomalyList() {
   if (!list.length) { cnt.textContent = '共 0 筆記錄'; wrap.innerHTML = '<div class="empty">目前沒有異常記錄</div>'; return; }
   const shown = Math.min(ANOM_SHOWN, list.length);
   cnt.textContent = shown < list.length ? `共 ${list.length} 筆記錄・顯示前 ${shown} 筆` : `共 ${list.length} 筆記錄`;
-  wrap.innerHTML = `<div class="alist">${list.slice(0, shown).map(anomalyRow).join('')}</div>` +
+  const head = `<thead><tr>
+    <th></th><th>登記日期</th><th>登記人</th><th>出貨日期</th><th>交易序號</th>
+    <th>平台</th><th>商品狀態</th><th>後續處理</th><th>問題類型</th>
+    <th class="num">損失金額</th><th class="num">運費</th><th class="num">總損失</th><th>產品編號</th>
+  </tr></thead>`;
+  wrap.innerHTML = `<div class="atable-wrap"><table class="atable">${head}<tbody>${list.slice(0, shown).map(anomalyTableRow).join('')}</tbody></table></div>` +
     (shown < list.length ? `<button class="btn-full" style="margin-top:12px" onclick="window._amore()">載入更多（剩 ${list.length-shown} 筆）</button>` : '');
-}
-
-function toggleAnomaly(docId) {
-  const det = document.getElementById('ad-'+docId);
-  const row = document.querySelector(`.arow[data-id="${docId}"]`);
-  if (!det) return;
-  if (!det.innerHTML) { const a = ANOMALIES.find(x=>x._docId===docId); if (a) det.innerHTML = anomalyDetail(a); }
-  const open = det.classList.toggle('open');
-  if (row) row.classList.toggle('open', open);
 }
 
 function loadMoreAnomaly() { ANOM_SHOWN += 60; renderAnomalyList(); }
@@ -1546,7 +1559,7 @@ window.renderAnomalyList=renderAnomalyList; window.renderStats=renderStats;
 window.loginGoogle=loginGoogle; window.loginEmail=loginEmail; window.logout=logout;
 window._pedit=editProduct; window._pdel=deleteProduct;
 window._aedit=editAnomaly; window._adel=deleteAnomaly;
-window._atoggle=toggleAnomaly; window._amore=loadMoreAnomaly;
+window._amore=loadMoreAnomaly;
 window.setImportTarget=setImportTarget; window.onImportFile=onImportFile; window.parseImport=parseImport;
 window.onMapChange=onMapChange; window.runImport=runImport; window.resetImport=resetImport;
 
