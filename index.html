@@ -59,7 +59,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .btn-logout:hover { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-text); }
 
 /* ── Main Tabs ── */
-.container { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+.container { max-width: 1600px; margin: 0 auto; padding: 1.5rem 2rem; }
 .main-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 5px; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
 .main-tab { padding: 9px 8px; border: none; border-radius: var(--radius); background: transparent; cursor: pointer; font-size: 13px; font-family: var(--sans); color: var(--text2); font-weight: 500; transition: all .15s; }
 .main-tab:hover { background: var(--bg2); color: var(--text); }
@@ -173,6 +173,17 @@ button:active { transform: scale(.98); }
 .atable .acts { display: flex; gap: 4px; }
 .atable .acts button { padding: 3px 9px; font-size: 11px; }
 .ttag { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 4px; line-height: 1.6; }
+.atable .arow { cursor: pointer; }
+.atable .cx { width: 26px; text-align: center; }
+.achev { display: inline-block; transition: transform .15s; font-size: 11px; color: var(--text3); }
+.atable .arow.open .achev { transform: rotate(90deg); }
+.atable .arow.open td { background: var(--bg2); }
+.adetail-row { display: none; }
+.adetail-row.open { display: table-row; }
+.adetail-row > td { background: var(--bg); padding: 0; }
+.adetail-inner { padding: 14px 16px; white-space: normal; }
+.ad-meta { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+.ad-label { font-size: 10px; font-family: var(--mono); color: var(--accent2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
 
 /* ── Product rows in anomaly form ── */
 .product-rows { display: flex; flex-direction: column; gap: 8px; }
@@ -1080,24 +1091,63 @@ function anomalyTableRow(a) {
   const sid = (a._docId||'');
   const pidCell = (a.products||[]).map(p =>
     /^https?:\/\//i.test(p.pid||'')
-      ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener" title="Notion 連結（尚未對應商品編號）">🔗</a>`
+      ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Notion 連結（尚未對應編號）">🔗</a>`
       : escapeHtml(p.pid||'')
-  ).filter(Boolean).join('　');
-  return `<tr>
-    <td><div class="acts"><button class="btn-sm" onclick="window._aedit('${sid}')">編輯</button><button class="btn-sm btn-danger" onclick="window._adel('${sid}')">刪除</button></div></td>
+  ).filter(Boolean).join('　') || '<span style="color:var(--text3)">—</span>';
+  return `<tr class="arow" data-id="${sid}" onclick="window._atoggle('${sid}')">
+    <td class="cx"><span class="achev">▸</span></td>
     <td class="c-date">${fmtDate(a.date)}</td>
-    <td>${escapeHtml(a.by||'')}</td>
-    <td class="c-date">${fmtDate(a.shipDate)}</td>
-    <td class="c-order">${a.order ? escapeHtml(a.order) : '<span style="color:var(--text3)">—</span>'}</td>
     <td>${pill(a.platform)}</td>
+    <td class="c-order">${a.order ? escapeHtml(a.order) : '<span style="color:var(--text3)">—</span>'}</td>
     <td>${pill(a.condition)}</td>
-    <td>${pill(a.resolution)}</td>
     <td>${pill(a.type)}</td>
-    <td class="num">${a.loss ? '$'+a.loss.toLocaleString() : ''}</td>
-    <td class="num">${a.freight ? '$'+a.freight.toLocaleString() : ''}</td>
+    <td>${pill(a.resolution)}</td>
     <td class="num loss">$${(a.total||0).toLocaleString()}</td>
     <td class="acol-pid">${pidCell}</td>
-  </tr>`;
+    <td>${escapeHtml(a.by||'')}</td>
+    <td><div class="acts" onclick="event.stopPropagation()">
+      <button class="btn-sm" onclick="window._aedit('${sid}')">編輯</button>
+      <button class="btn-sm btn-danger" onclick="window._adel('${sid}')">刪除</button>
+    </div></td>
+  </tr>
+  <tr class="adetail-row" id="adr-${sid}"><td colspan="11"><div class="adetail-inner"></div></td></tr>`;
+}
+
+function anomalyDetail(a) {
+  const products = (a.products||[]);
+  const meta = [
+    a.shipDate && `出貨日期 ${fmtDate(a.shipDate)}`,
+    a.loss ? `損失金額 $${a.loss.toLocaleString()}` : null,
+    a.freight ? `運費成本 $${a.freight.toLocaleString()}` : null,
+    `總損失 $${(a.total||0).toLocaleString()}`,
+  ].filter(Boolean).join('　·　');
+  const hasDetail = products.some(p => p.pname||p.pstyle||p.psize||p.pcost);
+  const prodHtml = hasDetail ? `
+    <div class="ad-label">商品明細</div>
+    <div class="anomaly-products">
+      ${products.map(p=>{
+        const isUrl = /^https?:\/\//i.test(p.pid||'');
+        const idCell = isUrl
+          ? `<a class="ap-link" href="${escapeHtml(p.pid)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Notion 來源</a>`
+          : `<span class="ap-id">${escapeHtml(p.pid)||'—'}</span>`;
+        return `<div class="ap-row">${idCell}
+          ${p.pname?`<span>${escapeHtml(p.pname)}</span>`:''}
+          ${p.pstyle?`<span style="color:var(--text2);font-size:12px">${escapeHtml(p.pstyle)}</span>`:''}
+          ${p.psize?`<span style="color:var(--text2);font-size:12px">${escapeHtml(p.psize)}</span>`:''}
+          ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${escapeHtml(p.pcost)}</span>`:''}
+        </div>`;}).join('')}
+    </div>` : '';
+  return `<div class="ad-meta">${meta}</div>${prodHtml}`;
+}
+
+function toggleAnomaly(docId) {
+  const detRow  = document.getElementById('adr-'+docId);
+  const mainRow = document.querySelector(`.arow[data-id="${docId}"]`);
+  if (!detRow) return;
+  const inner = detRow.querySelector('.adetail-inner');
+  if (inner && !inner.innerHTML) { const a = ANOMALIES.find(x=>x._docId===docId); if (a) inner.innerHTML = anomalyDetail(a); }
+  const open = detRow.classList.toggle('open');
+  if (mainRow) mainRow.classList.toggle('open', open);
 }
 
 let ANOM_SHOWN = 60, ANOM_KEY = '\u0000';
@@ -1122,9 +1172,9 @@ function renderAnomalyList() {
   const shown = Math.min(ANOM_SHOWN, list.length);
   cnt.textContent = shown < list.length ? `共 ${list.length} 筆記錄・顯示前 ${shown} 筆` : `共 ${list.length} 筆記錄`;
   const head = `<thead><tr>
-    <th></th><th>登記日期</th><th>登記人</th><th>出貨日期</th><th>交易序號</th>
-    <th>平台</th><th>商品狀態</th><th>後續處理</th><th>問題類型</th>
-    <th class="num">損失金額</th><th class="num">運費</th><th class="num">總損失</th><th>產品編號</th>
+    <th class="cx"></th><th>登記日期</th><th>平台</th><th>交易序號</th>
+    <th>商品狀態</th><th>問題類型</th><th>後續處理</th><th class="num">總損失</th>
+    <th>相關商品</th><th>登記人</th><th>操作</th>
   </tr></thead>`;
   wrap.innerHTML = `<div class="atable-wrap"><table class="atable">${head}<tbody>${list.slice(0, shown).map(anomalyTableRow).join('')}</tbody></table></div>` +
     (shown < list.length ? `<button class="btn-full" style="margin-top:12px" onclick="window._amore()">載入更多（剩 ${list.length-shown} 筆）</button>` : '');
@@ -1559,7 +1609,7 @@ window.renderAnomalyList=renderAnomalyList; window.renderStats=renderStats;
 window.loginGoogle=loginGoogle; window.loginEmail=loginEmail; window.logout=logout;
 window._pedit=editProduct; window._pdel=deleteProduct;
 window._aedit=editAnomaly; window._adel=deleteAnomaly;
-window._amore=loadMoreAnomaly;
+window._atoggle=toggleAnomaly; window._amore=loadMoreAnomaly;
 window.setImportTarget=setImportTarget; window.onImportFile=onImportFile; window.parseImport=parseImport;
 window.onMapChange=onMapChange; window.runImport=runImport; window.resetImport=resetImport;
 
