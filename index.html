@@ -186,6 +186,15 @@ button:active { transform: scale(.98); }
 .ad-label { font-size: 10px; font-family: var(--mono); color: var(--accent2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
 .danger-zone { margin-top: 1.5rem; padding: 1.25rem 1.5rem; background: var(--danger-bg); border: 1px solid var(--danger-text); border-radius: var(--radius-lg); }
 .danger-zone p { line-height: 1.6; }
+.lapse-table { width: auto; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+.lapse-table th { font-size: 11px; font-family: var(--mono); color: var(--text3); font-weight: 500; text-align: left; padding: 6px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.lapse-table th.num, .lapse-table td.num { text-align: right; }
+.lapse-table td { padding: 8px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.lapse-table .num { font-family: var(--mono); padding-left: 32px; }
+.lapse-table .pct { font-weight: 700; color: var(--danger-text); }
+.lapse-table .lapse-total td { border-top: 2px solid var(--border2); border-bottom: none; font-weight: 600; }
+.lapse-oth { margin-top: 14px; font-size: 13px; color: var(--text2); line-height: 1.9; }
+.lapse-oth b { color: var(--text); font-family: var(--mono); }
 
 /* ── Product rows in anomaly form ── */
 .product-rows { display: flex; flex-direction: column; gap: 8px; }
@@ -287,6 +296,9 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
     <div class="field" style="margin-bottom:12px"><label>電子郵件</label><input type="email" id="login-email" placeholder="example@gmail.com"></div>
     <div class="field" style="margin-bottom:12px"><label>密碼</label><input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginEmail()"></div>
     <button class="btn-full primary" onclick="loginEmail()">登入</button>
+    <div style="text-align:center;margin-top:16px">
+      <button onclick="previewMode()" style="background:none;border:none;color:var(--accent2);font-size:13px;cursor:pointer;text-decoration:underline">跳過登入，用範例資料預覽版面 →</button>
+    </div>
   </div>
 </div>
 
@@ -509,6 +521,24 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
       </div>
       <div class="summary-grid" id="stats-summary"></div>
       <div id="stats-breakdown"></div>
+
+      <!-- 疏失計算（已併入損失統計） -->
+      <div class="section-label" style="margin-top:2rem;margin-bottom:.75rem">🧮 疏失計算</div>
+      <div class="filter-row" style="margin-bottom:1rem;align-items:center;flex-wrap:wrap;gap:8px">
+        <button class="btn-sm" onclick="setLapseWeek('this')">本週</button>
+        <button class="btn-sm" onclick="setLapseWeek('last')">上週</button>
+        <input type="date" id="lapse-from" onchange="renderLapse()">
+        <span style="color:var(--text3);flex:0">～</span>
+        <input type="date" id="lapse-to" onchange="renderLapse()">
+        <span class="form-hint" style="flex:1">依「登記日期」統計</span>
+      </div>
+      <div class="form-card" style="margin-bottom:1rem">
+        <div class="form-section" style="margin:0">
+          <label>當周出貨筆數（手動輸入）</label>
+          <input type="number" id="lapse-shipments" min="0" placeholder="例如 1200" oninput="renderLapse()">
+        </div>
+      </div>
+      <div id="lapse-result"></div>
     </div>
 
     <!-- ══ 匯入 ══ -->
@@ -590,13 +620,6 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider,
-         signInWithEmailAndPassword, signOut }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyC5c-2W-wZAIjbbZTBS0lfKV1LsTmTOwz8",
   authDomain: "product-database-dbe0f.firebaseapp.com",
@@ -606,15 +629,30 @@ const firebaseConfig = {
   appId: "1:1025340803871:web:20124473bc8596670abe2a"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+// 動態載入 Firebase；若環境（如預覽框）擋掉外部程式，仍讓其餘功能與「預覽模式」可用
+let initializeApp, getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut;
+let getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch;
+let app, db, auth, provider, firebaseOK = false;
+try {
+  ({ initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"));
+  ({ getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut }
+     = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"));
+  ({ getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch }
+     = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"));
+  app = initializeApp(firebaseConfig);
+  db  = getFirestore(app);
+  auth = getAuth(app);
+  provider = new GoogleAuthProvider();
+  firebaseOK = true;
+} catch(e) {
+  console.warn('Firebase 無法載入（可能在預覽環境被擋）。可點登入畫面下方「跳過登入」用預覽模式。', e);
+}
+
 let DB = [], ANOMALIES = [];
 let currentUser = null;
 
 // ── Auth ──
-onAuthStateChanged(auth, user => {
+if (firebaseOK) onAuthStateChanged(auth, user => {
   if (user) {
     currentUser = user;
     document.getElementById('login-page').style.display = 'none';
@@ -655,6 +693,34 @@ function showLoginError(msg) {
 }
 
 async function logout() { await signOut(auth); toast('已登出'); }
+
+// ── 預覽模式（跳過登入，載入範例假資料，不連 Firebase）──
+function previewMode() {
+  currentUser = { displayName: '預覽帳號' };
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app-page').style.display   = 'block';
+  document.getElementById('user-avatar').textContent  = '預';
+  document.getElementById('user-name').textContent     = '預覽模式（範例資料）';
+  document.getElementById('a-by').value = '預覽帳號';
+  setSyncStatus('ok', '預覽模式');
+
+  DB = [
+    { _docId:'p1', id:'DO405', name:'純棉短袖上衣', style:'白', size:'M', material:'純棉',   cost:'120', hasVariants:false, variants:[], ts:Date.now() },
+    { _docId:'p2', id:'DR240', name:'寬版長褲',     style:'黑', size:'L', material:'聚酯纖維', cost:'180', hasVariants:false, variants:[], ts:Date.now() },
+    { _docId:'p3', id:'DE854', name:'針織外套',     style:'灰', size:'F', material:'羊毛混紡', cost:'320', hasVariants:false, variants:[], ts:Date.now() },
+  ];
+  const today = new Date();
+  const d = off => { const x = new Date(today); x.setDate(today.getDate()-off); return toISO(x.getTime()); };
+  ANOMALIES = [
+    { _docId:'a1', date:d(0), platform:'蝦皮A', condition:'商品錯誤', type:'寄錯', resolution:'線上退款(僅退該商品)', by:'客服部-小美', shipDate:d(3), order:'13051507', products:[{pid:'DO405',pname:'純棉短袖上衣'}], loss:131, freight:60, total:191, ts:Date.now() },
+    { _docId:'a2', date:d(1), platform:'蝦皮C', condition:'商品瑕疵', type:'特殊狀況', resolution:'客可接受商品', by:'客服部-阿明', shipDate:d(4), order:'13049152', products:[{pid:'DE854',pname:'針織外套'}], loss:320, freight:0, total:320, ts:Date.now() },
+    { _docId:'a3', date:d(2), platform:'MOMO大網', condition:'其他問題', type:'星號缺貨', resolution:'宅配補寄', by:'客服部-小美', shipDate:d(5), order:'13050960', products:[{pid:'DR240',pname:'寬版長褲'}], loss:0, freight:60, total:60, ts:Date.now() },
+    { _docId:'a4', date:d(2), platform:'蝦皮D', condition:'其他問題', type:'匯單有誤', resolution:'補下單', by:'客服部-阿明', shipDate:d(6), order:'13055077', products:[{pid:'DO405',pname:'純棉短袖上衣'}], loss:88, freight:0, total:88, ts:Date.now() },
+    { _docId:'a5', date:d(5), platform:'蝦皮A', condition:'商品錯誤', type:'少寄', resolution:'線上退款(僅退該商品)', by:'客服部-小美', shipDate:d(8), order:'13048825', products:[{pid:'DR240',pname:'寬版長褲'}], loss:78, freight:0, total:78, ts:Date.now() },
+  ];
+  doSearch(''); renderAll(); renderAnomalyList(); renderStats();
+  switchMain('anomaly');
+}
 
 // ── Sync Status ──
 function setSyncStatus(state, label) {
@@ -1254,16 +1320,23 @@ function renderStats() {
     list.forEach(a => { const k = keyFn(a) || '（未填）'; if (!m[k]) m[k] = {count:0, total:0}; m[k].count++; m[k].total += a.total||0; });
     return m;
   };
-  const card = (title, map) => {
-    const inner = buildBreakdown(map);
-    return inner ? `<div class="form-card" style="margin-bottom:1rem"><div class="form-section"><div class="section-label">${title}</div>${inner}</div></div>` : '';
-  };
 
-  let html = card('各商品狀態（筆數・成本）', group(a=>a.condition))
-           + card('各問題類型（筆數・成本）', group(a=>a.type))
-           + card('各平台損失（筆數・成本）', group(a=>a.platform));
-
-  if (!html) html = '<div class="empty">此期間沒有異常記錄</div>';
+  // 各平台損失（表格，不用長條圖）
+  const platEntries = Object.entries(group(a=>a.platform)).sort((a,b)=>b[1].total-a[1].total);
+  let html;
+  if (platEntries.length) {
+    html = `<div class="form-card"><div class="form-section"><div class="section-label">各平台損失</div>
+      <table class="lapse-table">
+        <thead><tr><th>平台</th><th class="num">筆數</th><th class="num">總損失</th></tr></thead>
+        <tbody>${platEntries.map(([k,v])=>`<tr>
+          <td>${escapeHtml(k)}</td>
+          <td class="num">${v.count}</td>
+          <td class="num" style="color:var(--danger-text);font-weight:600">$${v.total.toLocaleString()}</td>
+        </tr>`).join('')}</tbody>
+      </table></div></div>`;
+  } else {
+    html = '<div class="empty">此期間沒有異常記錄</div>';
+  }
   document.getElementById('stats-breakdown').innerHTML = html;
 }
 
@@ -1587,6 +1660,68 @@ async function clearAllAnomalies() {
   }
 }
 
+// ══ 疏失計算 ══
+function weekRange(offset) {  // offset: 0=本週, -1=上週（週一～週日）
+  const now = new Date();
+  const dow = (now.getDay()+6)%7;                 // 週一為 0
+  const mon = new Date(now); mon.setDate(now.getDate()-dow+offset*7); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return [toISO(mon.getTime()), toISO(sun.getTime())];
+}
+function setLapseWeek(which) {
+  const [f,t] = weekRange(which==='last' ? -1 : 0);
+  document.getElementById('lapse-from').value = f;
+  document.getElementById('lapse-to').value   = t;
+  renderLapse();
+}
+
+const LAPSE_OTH_TYPES = ['星號缺貨','超材','匯單有誤','複合式錯誤'];
+
+function renderLapse() {
+  const fromV = document.getElementById('lapse-from').value;
+  const toV   = document.getElementById('lapse-to').value;
+  const ship  = parseFloat(document.getElementById('lapse-shipments').value) || 0;
+  const fromT = fromV ? parseAnyDate(fromV) : -Infinity;
+  const toT   = toV   ? parseAnyDate(toV) + 86399999 : Infinity;
+
+  const week = ANOMALIES.filter(a => { const t = parseAnyDate(a.date); return t && t>=fromT && t<=toT; });
+  const errN = week.filter(a=>a.condition==='商品錯誤').length;
+  const defN = week.filter(a=>a.condition==='商品瑕疵').length;
+  const othN = week.filter(a=>a.condition==='其他問題').length;
+  const totalN = errN + defN + othN;
+
+  const fmtPct = n => ship>0 ? (n/ship*100).toFixed(2)+'%' : '—';
+
+  // 其他問題 → 依問題類型細分（四個固定項一定列出，其餘動態補上）
+  const othBreak = {}; LAPSE_OTH_TYPES.forEach(t=>othBreak[t]=0);
+  week.filter(a=>a.condition==='其他問題').forEach(a=>{ const t=a.type||'（未填）'; othBreak[t]=(othBreak[t]||0)+1; });
+  const othDetail = Object.entries(othBreak).map(([t,c])=>`${t} <b>${c}</b> 筆`).join('　・　');
+
+  const row = (label, n, isTotal) => `<tr${isTotal?' class="lapse-total"':''}>
+    <td>${label}</td><td class="num">${n} 筆</td><td class="num pct">${fmtPct(n)}</td></tr>`;
+
+  document.getElementById('lapse-result').innerHTML = `
+    <div class="summary-grid" style="margin-bottom:1rem">
+      <div class="summary-card"><div class="summary-label">當周出貨筆數</div><div class="summary-value">${ship.toLocaleString()}</div></div>
+      <div class="summary-card"><div class="summary-label">異常合計</div><div class="summary-value">${totalN}</div></div>
+      <div class="summary-card"><div class="summary-label">總疏失率</div><div class="summary-value red">${fmtPct(totalN)}</div></div>
+    </div>
+    <div class="form-card">
+      <div class="section-label">當周疏失率（${fromV||'—'} ～ ${toV||'—'}）</div>
+      ${ship>0 ? '' : '<p style="font-size:13px;color:var(--warn-text);margin:8px 0 0">⚠ 請先在上方輸入「當周出貨筆數」，才能算出百分比。</p>'}
+      <table class="lapse-table">
+        <thead><tr><th>商品狀態</th><th class="num">筆數</th><th class="num">佔當周出貨</th></tr></thead>
+        <tbody>
+          ${row('商品錯誤', errN)}
+          ${row('商品瑕疵', defN)}
+          ${row('其他問題', othN)}
+          ${row('合計', totalN, true)}
+        </tbody>
+      </table>
+      <div class="lapse-oth"><span class="ad-label">其他問題明細</span>${othDetail}</div>
+    </div>`;
+}
+
 function showImportResult(added, updated, skipped) {
   const tgt = IMPORT.target==='products' ? '商品' : '異常記錄';
   document.getElementById('imp-map-card').style.display = 'none';
@@ -1616,7 +1751,10 @@ function switchMain(t) {
   document.querySelectorAll('.main-tab').forEach((el,i)=>el.classList.toggle('active',['products','anomaly','stats','import'][i]===t));
   document.querySelectorAll('.main-panel').forEach(el=>el.classList.remove('active'));
   document.getElementById('main-'+t).classList.add('active');
-  if (t==='stats') renderStats();
+  if (t==='stats') {
+    renderStats();
+    if (!document.getElementById('lapse-from').value) setLapseWeek('this'); else renderLapse();
+  }
   if (t==='anomaly') renderAnomalyList();
 }
 
@@ -1651,6 +1789,8 @@ window._pedit=editProduct; window._pdel=deleteProduct;
 window._aedit=editAnomaly; window._adel=deleteAnomaly;
 window._atoggle=toggleAnomaly; window._amore=loadMoreAnomaly;
 window.clearAllAnomalies=clearAllAnomalies;
+window.setLapseWeek=setLapseWeek; window.renderLapse=renderLapse;
+window.previewMode=previewMode;
 window.setImportTarget=setImportTarget; window.onImportFile=onImportFile; window.parseImport=parseImport;
 window.onMapChange=onMapChange; window.runImport=runImport; window.resetImport=resetImport;
 
