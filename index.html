@@ -184,6 +184,8 @@ button:active { transform: scale(.98); }
 .adetail-inner { padding: 14px 16px; white-space: normal; }
 .ad-meta { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
 .ad-label { font-size: 10px; font-family: var(--mono); color: var(--accent2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+.danger-zone { margin-top: 1.5rem; padding: 1.25rem 1.5rem; background: var(--danger-bg); border: 1px solid var(--danger-text); border-radius: var(--radius-lg); }
+.danger-zone p { line-height: 1.6; }
 
 /* ── Product rows in anomaly form ── */
 .product-rows { display: flex; flex-direction: column; gap: 8px; }
@@ -573,6 +575,13 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
           <span class="form-hint"></span>
           <div class="btn-group"><button class="btn-primary" onclick="resetImport()">再匯入一批</button></div>
         </div>
+      </div>
+
+      <!-- 資料管理 / 危險操作 -->
+      <div class="danger-zone">
+        <div class="section-label" style="color:var(--danger-text)">⚠️ 資料管理（危險操作）</div>
+        <p style="font-size:13px;color:var(--text2);margin:8px 0 14px">清空全部異常記錄後無法復原。<b>商品資料庫不受影響</b>，只會刪除「異常記錄」這個集合。適合想重新匯入乾淨資料時使用。</p>
+        <button class="btn-danger" onclick="clearAllAnomalies()">🗑 清空全部異常記錄</button>
       </div>
     </div>
   </div>
@@ -1547,6 +1556,37 @@ async function commitBatches(ops) {
   }
 }
 
+// 一次清空全部異常記錄（不影響商品資料庫）
+async function clearAllAnomalies() {
+  const n = ANOMALIES.length;
+  if (!n) { toast('目前沒有異常記錄'); return; }
+  const ans = prompt(`⚠️ 將永久刪除全部 ${n} 筆異常記錄，無法復原。\n商品資料庫不受影響。\n\n確定的話，請輸入「刪除」兩個字：`);
+  if (ans !== '刪除') { toast('已取消，未刪除任何資料'); return; }
+  const ids = ANOMALIES.map(a => a._docId).filter(Boolean);
+  setSyncStatus('saving', `刪除中… 0/${n}`);
+  let done = 0;
+  try {
+    for (let i=0; i<ids.length; i+=400) {
+      const batch = writeBatch(db);
+      ids.slice(i, i+400).forEach(id => batch.delete(doc(db,'anomalies',id)));
+      await batch.commit();
+      done += Math.min(400, ids.length - i);
+      setSyncStatus('saving', `刪除中… ${done}/${n}`);
+    }
+    ANOMALIES = [];
+    setSyncStatus('ok', '已連線');
+    renderAnomalyList(); renderStats();
+    toast(`✓ 已刪除全部 ${n} 筆異常記錄`);
+  } catch(e) {
+    console.error(e); setSyncStatus('error','刪除失敗');
+    // 把已刪除的從本地移除，保留剩餘的
+    const deleted = new Set(ids.slice(0, done));
+    ANOMALIES = ANOMALIES.filter(a => !deleted.has(a._docId));
+    renderAnomalyList(); renderStats();
+    toast(`❌ 刪除中斷（已刪 ${done}/${n}）：${e.code || e.message || '可能是當日額度已滿，明天再清一次即可'}`);
+  }
+}
+
 function showImportResult(added, updated, skipped) {
   const tgt = IMPORT.target==='products' ? '商品' : '異常記錄';
   document.getElementById('imp-map-card').style.display = 'none';
@@ -1610,6 +1650,7 @@ window.loginGoogle=loginGoogle; window.loginEmail=loginEmail; window.logout=logo
 window._pedit=editProduct; window._pdel=deleteProduct;
 window._aedit=editAnomaly; window._adel=deleteAnomaly;
 window._atoggle=toggleAnomaly; window._amore=loadMoreAnomaly;
+window.clearAllAnomalies=clearAllAnomalies;
 window.setImportTarget=setImportTarget; window.onImportFile=onImportFile; window.parseImport=parseImport;
 window.onMapChange=onMapChange; window.runImport=runImport; window.resetImport=resetImport;
 
