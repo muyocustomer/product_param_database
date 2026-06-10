@@ -195,6 +195,14 @@ button:active { transform: scale(.98); }
 .lapse-table .lapse-total td { border-top: 2px solid var(--border2); border-bottom: none; font-weight: 600; }
 .lapse-oth { margin-top: 14px; font-size: 13px; color: var(--text2); line-height: 1.9; }
 .lapse-oth b { color: var(--text); font-family: var(--mono); }
+.media-preview, .media-view { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.media-item { position: relative; width: 84px; height: 84px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg2); }
+.media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
+.media-del { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border: none; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; line-height: 18px; text-align: center; cursor: pointer; padding: 0; }
+.media-badge { position: absolute; bottom: 2px; left: 3px; font-size: 13px; }
+.media-new { position: absolute; bottom: 2px; right: 3px; font-size: 9px; background: var(--accent2); color: #fff; padding: 0 4px; border-radius: 3px; }
+.media-view img { width: 140px; height: 140px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer; }
+.media-view video { max-width: 280px; max-height: 200px; border-radius: var(--radius); border: 1px solid var(--border); background: #000; }
 
 /* ── Product rows in anomaly form ── */
 .product-rows { display: flex; flex-direction: column; gap: 8px; }
@@ -487,6 +495,13 @@ mark { background: #ffe066; color: #5a3e00; border-radius: 2px; padding: 0 1px; 
               <div class="field"><label>總損失金額 (元)</label><input id="a-total" type="number" placeholder="自動計算" readonly style="font-weight:600;color:var(--danger-text)"></div>
             </div>
           </div>
+          <div class="form-section">
+            <div class="section-label">照片 / 影片（佐證，可選）</div>
+            <label class="file-btn" for="a-media-input">📷 選擇圖片或影片</label>
+            <input type="file" id="a-media-input" accept="image/*,video/*" multiple style="display:none" onchange="onMediaSelect(event)">
+            <span class="form-hint" style="margin-left:8px">可多選；影片建議短一點以節省空間</span>
+            <div class="media-preview" id="a-media-preview"></div>
+          </div>
           <div class="form-footer">
             <span class="form-hint" id="a-edit-hint"></span>
             <div class="btn-group">
@@ -632,14 +647,18 @@ const firebaseConfig = {
 // 動態載入 Firebase；若環境（如預覽框）擋掉外部程式，仍讓其餘功能與「預覽模式」可用
 let initializeApp, getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut;
 let getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch;
-let app, db, auth, provider, firebaseOK = false;
+let getStorage, storageRef, uploadBytes, getDownloadURL;
+let app, db, auth, provider, storage, firebaseOK = false;
 try {
   ({ initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"));
   ({ getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut }
      = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"));
   ({ getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch }
      = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"));
+  ({ getStorage, ref: storageRef, uploadBytes, getDownloadURL }
+     = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"));
   app = initializeApp(firebaseConfig);
+  storage = getStorage(app);
   db  = getFirestore(app);
   auth = getAuth(app);
   provider = new GoogleAuthProvider();
@@ -1079,6 +1098,29 @@ async function saveAnomaly() {
   };
 
   setSyncStatus('saving','儲存中…');
+
+  // 上傳新選的照片/影片到 Firebase Storage
+  let media = [...aMediaExisting];
+  if (aMediaNew.length) {
+    if (!storage) { toast('⚠ 檔案服務未載入，無法上傳'); setSyncStatus('error','上傳失敗'); return; }
+    try {
+      for (let i=0; i<aMediaNew.length; i++) {
+        const f = aMediaNew[i];
+        setSyncStatus('saving', `上傳檔案中… ${i+1}/${aMediaNew.length}`);
+        const path = `anomalies/${Date.now()}_${i}_${f.name.replace(/[^\w.\-]/g,'_')}`;
+        const r = storageRef(storage, path);
+        await uploadBytes(r, f);
+        const url = await getDownloadURL(r);
+        media.push({ url, type: f.type.startsWith('video') ? 'video' : 'image', name: f.name, path });
+      }
+    } catch(e) {
+      console.error(e); setSyncStatus('error','上傳失敗');
+      toast('❌ 圖片/影片上傳失敗：' + (e.code || e.message || '') + '（可能要設定 Storage 規則）');
+      return;
+    }
+  }
+  a.media = media;
+
   let wrote = false;
   try {
     const editId = document.getElementById('a-edit-hint').dataset.docid;
@@ -1130,6 +1172,9 @@ function editAnomaly(docId) {
   document.getElementById('product-rows').innerHTML = '';
   productRowCount = 0;
   (a.products || []).forEach(p => addProductRow(p));
+  aMediaExisting = (a.media || []).slice();
+  aMediaNew = [];
+  renderMediaPreview();
   const hint = document.getElementById('a-edit-hint');
   hint.textContent = `編輯中：${a.order || a.date}`;
   hint.dataset.docid = docId;
@@ -1146,7 +1191,33 @@ function clearAnomalyForm() {
   const hint = document.getElementById('a-edit-hint');
   hint.textContent = ''; hint.dataset.docid = '';
   if (currentUser) document.getElementById('a-by').value = currentUser.displayName || currentUser.email || '';
+  aMediaExisting = []; aMediaNew = []; renderMediaPreview();
   addProductRow();
+}
+
+// ── 異常照片/影片上傳 ──
+let aMediaExisting = [], aMediaNew = [];
+function onMediaSelect(e) {
+  for (const f of e.target.files) aMediaNew.push(f);
+  e.target.value = '';
+  renderMediaPreview();
+}
+function removeNewMedia(i) { aMediaNew.splice(i,1); renderMediaPreview(); }
+function removeExistingMedia(i) { aMediaExisting.splice(i,1); renderMediaPreview(); }
+function mediaThumb(url, type, removeCall, isNew) {
+  const inner = type==='video'
+    ? `<video src="${url}" muted></video><span class="media-badge">🎬</span>`
+    : `<img src="${url}" alt="">`;
+  return `<div class="media-item">${inner}<button class="media-del" onclick="${removeCall}">✕</button>${isNew?'<span class="media-new">新</span>':''}</div>`;
+}
+function renderMediaPreview() {
+  const el = document.getElementById('a-media-preview'); if (!el) return;
+  const ex = aMediaExisting.map((m,i)=>mediaThumb(m.url, m.type, `removeExistingMedia(${i})`, false)).join('');
+  const nw = aMediaNew.map((f,i)=>{
+    const type = f.type.startsWith('video') ? 'video' : 'image';
+    return mediaThumb(URL.createObjectURL(f), type, `removeNewMedia(${i})`, true);
+  }).join('');
+  el.innerHTML = ex + nw;
 }
 
 const PLATFORM_COLORS = {
@@ -1212,7 +1283,12 @@ function anomalyDetail(a) {
           ${p.pcost?`<span style="color:var(--text2);font-size:12px">成本 $${escapeHtml(p.pcost)}</span>`:''}
         </div>`;}).join('')}
     </div>` : '';
-  return `<div class="ad-meta">${meta}</div>${prodHtml}`;
+  return `<div class="ad-meta">${meta}</div>${prodHtml}${(a.media||[]).length ? `
+    <div class="ad-label" style="margin-top:14px">照片 / 影片</div>
+    <div class="media-view">${a.media.map(m => m.type==='video'
+      ? `<video src="${escapeHtml(m.url)}" controls preload="metadata"></video>`
+      : `<a href="${escapeHtml(m.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><img src="${escapeHtml(m.url)}" alt="${escapeHtml(m.name||'')}"></a>`
+    ).join('')}</div>` : ''}`;
 }
 
 function toggleAnomaly(docId) {
@@ -1791,6 +1867,7 @@ window._atoggle=toggleAnomaly; window._amore=loadMoreAnomaly;
 window.clearAllAnomalies=clearAllAnomalies;
 window.setLapseWeek=setLapseWeek; window.renderLapse=renderLapse;
 window.previewMode=previewMode;
+window.onMediaSelect=onMediaSelect; window.removeNewMedia=removeNewMedia; window.removeExistingMedia=removeExistingMedia;
 window.setImportTarget=setImportTarget; window.onImportFile=onImportFile; window.parseImport=parseImport;
 window.onMapChange=onMapChange; window.runImport=runImport; window.resetImport=resetImport;
 
