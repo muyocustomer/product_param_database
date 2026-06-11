@@ -653,7 +653,7 @@ const firebaseConfig = {
 // 動態載入 Firebase；若環境（如預覽框）擋掉外部程式，仍讓其餘功能與「預覽模式」可用
 let initializeApp, getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut;
 let getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch;
-let getStorage, storageRef, uploadBytes, getDownloadURL;
+let getStorage, storageRef, uploadBytes, uploadBytesResumable, getDownloadURL;
 let app, db, auth, provider, storage, firebaseOK = false;
 try {
   ({ initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"));
@@ -661,7 +661,7 @@ try {
      = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"));
   ({ getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, writeBatch }
      = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"));
-  ({ getStorage, ref: storageRef, uploadBytes, getDownloadURL }
+  ({ getStorage, ref: storageRef, uploadBytes, uploadBytesResumable, getDownloadURL }
      = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"));
   app = initializeApp(firebaseConfig);
   storage = getStorage(app);
@@ -1111,17 +1111,17 @@ async function saveAnomaly() {
     if (!storage) { toast('⚠ 檔案服務未載入，無法上傳'); setSyncStatus('error','上傳失敗'); return; }
     try {
       for (let i=0; i<aMediaNew.length; i++) {
-        const f = aMediaNew[i];
-        setSyncStatus('saving', `上傳檔案中… ${i+1}/${aMediaNew.length}`);
-        const path = `anomalies/${Date.now()}_${i}_${f.name.replace(/[^\w.\-]/g,'_')}`;
-        const r = storageRef(storage, path);
-        await uploadBytes(r, f);
-        const url = await getDownloadURL(r);
-        media.push({ url, type: f.type.startsWith('video') ? 'video' : 'image', name: f.name, path });
+        const orig = aMediaNew[i];
+        const isVideo = orig.type.startsWith('video');
+        const f = isVideo ? orig : await compressImage(orig);   // 圖片先壓縮
+        const path = `anomalies/${Date.now()}_${i}_${orig.name.replace(/[^\w.\-]/g,'_')}`;
+        const url = await uploadOne(f, path, p =>
+          setSyncStatus('saving', `上傳中 ${i+1}/${aMediaNew.length}（${Math.round(p*100)}%）`));
+        media.push({ url, type: isVideo ? 'video' : 'image', name: orig.name, path });
       }
     } catch(e) {
       console.error(e); setSyncStatus('error','上傳失敗');
-      toast('❌ 圖片/影片上傳失敗：' + (e.code || e.message || '') + '（可能要設定 Storage 規則）');
+      toast('❌ 圖片/影片上傳失敗：' + (e.code || e.message || '') + '（檔案太大或網路不穩，可再試一次）');
       return;
     }
   }
@@ -1203,8 +1203,44 @@ function clearAnomalyForm() {
 
 // ── 異常照片/影片上傳 ──
 let aMediaExisting = [], aMediaNew = [];
+
+// 圖片上傳前縮圖壓縮（大幅加快上傳）
+async function compressImage(file, maxDim = 1600, quality = 0.82) {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    let { width, height } = bitmap;
+    if (Math.max(width, height) > maxDim) {
+      const s = maxDim / Math.max(width, height);
+      width = Math.round(width * s); height = Math.round(height * s);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+    if (blob && blob.size < file.size) return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
+    return file;
+  } catch { return file; }
+}
+
+// 可續傳上傳（含進度回呼），比一次整包上傳穩定
+function uploadOne(file, path, onProgress) {
+  return new Promise((resolve, reject) => {
+    const task = uploadBytesResumable(storageRef(storage, path), file);
+    task.on('state_changed',
+      snap => onProgress && onProgress(snap.bytesTransferred / (snap.totalBytes || 1)),
+      reject,
+      async () => { try { resolve(await getDownloadURL(task.snapshot.ref)); } catch(e) { reject(e); } }
+    );
+  });
+}
+
 function onMediaSelect(e) {
-  for (const f of e.target.files) aMediaNew.push(f);
+  for (const f of e.target.files) {
+    if (f.type.startsWith('video') && f.size > 50*1024*1024)
+      toast(`⚠ 影片「${f.name}」較大（${(f.size/1048576).toFixed(0)}MB），上傳會比較久`);
+    aMediaNew.push(f);
+  }
   e.target.value = '';
   renderMediaPreview();
 }
